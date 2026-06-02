@@ -1,0 +1,166 @@
+import ctypes
+import os
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_CONFIG_PATH = os.path.join(ROOT_DIR, "default.json")
+MASTER_CONFIG_PATH = os.path.join(ROOT_DIR, "master_config.json")
+CONFIG_DIR = os.path.join(ROOT_DIR, "configs")
+HIDAPI_DLL_PATH = os.path.join(ROOT_DIR, "hidapi.dll")
+VADER_VENDOR_ID = 0x04B4
+VADER_PRODUCT_ID = 0x2412
+
+PIPE_NAME = r"\\.\pipe\VaderHaptic"
+GENERIC_WRITE = 0x40000000
+OPEN_EXISTING = 3
+INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
+ERROR_PIPE_BUSY = 231
+
+UI_TEXT_RU: dict[str, str] = {
+    "VaderDriver Config Editor": "VaderDriver Config Editor",
+    "General": "Общие",
+    "Mode Switching": "Переключение режимов",
+    "Low Profile": "Низкая чувствительность",
+    "High Profile": "Высокая чувствительность",
+    "Calibration": "Калибровка",
+    "Test Inputs": "Тестовые кнопки",
+    "Source": "Источник режима",
+    "Trigger Routing": "Логика триггера",
+    "Button Routing": "Логика кнопки",
+    "Core Motion": "Основное движение",
+    "Axis Mixing": "Смешивание осей",
+    "Precision Shaping": "Точная доводка",
+    "One Euro Filters": "Фильтры One Euro",
+    "Roll Shaping": "Обработка roll",
+    "Acceleration": "Ускорение",
+    "Joystick Mode": "Режим стика",
+    "Smoothing": "Сглаживание",
+    "LED": "Подсветка",
+    "Editing target": "Редактируемая цель",
+    "Config file": "Файл конфига",
+    "Add app override": "Добавить app override",
+    "Remove app override": "Удалить app override",
+    "Rescan": "Обновить список",
+    "Browse": "Открыть файл",
+    "Open in configs": "Сохранить в configs",
+    "Advanced": "Расширенный",
+    "Save": "Сохранить",
+    "Reload": "Перезагрузить",
+    "Test LED": "Тест LED",
+    "Test rumble": "Тест вибрации",
+    "Pick color": "Выбрать цвет",
+    "Default fallback": "Базовый default",
+    "Ready": "Готово",
+    "Unsaved changes": "Есть несохраненные изменения",
+    "Config reloaded": "Конфиг перезагружен",
+    "Config saved": "Конфиг сохранен",
+    "Saved as new config": "Конфиг сохранен как новый",
+    "App override added": "App override добавлен",
+    "App override removed": "App override удален",
+    "Rumble test sent": "Тест вибрации отправлен",
+    "LED test sent": "Тест LED отправлен",
+    "Real world sensitivity": "Чувствительность",
+    "Dots per 360": "Dots per 360",
+    "Vertical scale": "Вертикальный масштаб",
+    "Invert roll": "Инвертировать roll",
+    "Tilt axis angle": "Угол tilt axis",
+    "Yaw weight": "Вес yaw",
+    "Roll weight": "Вес roll",
+    "Precision threshold": "Порог точности",
+    "Precision power": "Сила кривой точности",
+    "Recovery": "Recovery",
+    "Recovery rate": "Скорость recovery",
+    "Mouse filter cutoff": "One Euro cutoff",
+    "Mouse filter beta": "One Euro beta",
+    "Roll deadzone": "Roll deadzone",
+    "Roll precision threshold": "Порог точности roll",
+    "Roll precision power": "Сила кривой roll",
+    "Roll filter cutoff": "Roll One Euro cutoff",
+    "Roll filter beta": "Roll One Euro beta",
+    "Joystick mode": "Режим стика",
+    "Joystick deadzone": "Мертвая зона стика",
+    "Joystick exponent": "Экспонента стика",
+    "Joystick max speed": "Макс. скорость стика",
+    "Joystick vertical scale": "Вертикальный масштаб стика",
+    "Joystick input deadzone": "Мертвая зона входа стика",
+    "Joystick input rate": "Скорость набора стика",
+    "Joystick centering": "Возврат стика",
+    "Joystick auto recenter": "Авто-возврат стика",
+    "Joystick tilt limit": "Лимит tilt стика",
+    "Joystick filter cutoff": "Cutoff фильтра стика",
+    "Joystick filter beta": "Beta фильтра стика",
+    "Low-speed smoothing": "Сглаживание на малой скорости",
+    "Smooth speed threshold": "Порог скорости сглаживания",
+    "Smooth max strength": "Макс. сила сглаживания",
+    "Smooth lerp speed": "Скорость lerp сглаживания",
+    "Profile LED": "LED профиля",
+    "LED red": "Красный LED",
+    "LED green": "Зеленый LED",
+    "LED blue": "Синий LED",
+    "LED brightness": "Яркость LED",
+    "Auto calibration time": "Время автокалибровки",
+    "Auto calibration tolerance": "Допуск автокалибровки",
+    "Accel still threshold": "Порог неподвижности accel",
+    "Accel Z offset": "Смещение accel Z",
+    "Enable test hotkeys": "Включить тестовые горячие клавиши",
+    "360 key": "Клавиша 360",
+    "180 key": "Клавиша 180",
+    "Set default": "По умолчанию",
+    "Default config updated": "Конфиг по умолчанию обновлён",
+    "Manual Mode Keys": "Ручное переключение режимов",
+    "Enable manual mode hotkeys": "Включить горячие клавиши режимов",
+    "Force Off key": "Клавиша режима «Выкл»",
+    "Force Low Profile key": "Клавиша низкой чувствительности",
+    "Force High Profile key": "Клавиша высокой чувствительности",
+    "Mode source": "Источник режима",
+    "Trigger low threshold": "Нижний порог триггера",
+    "Trigger high threshold": "Верхний порог триггера",
+    "Trigger byte": "Байт триггера",
+    "Button byte": "Байт кнопки",
+    "Button mask": "Маска кнопки",
+    "Toggle mode": "Режим toggle",
+    "Accel rate": "Сила ускорения",
+    "Accel threshold": "Порог ускорения",
+    "Accel limit": "Лимит ускорения",
+    "Executable name": "Имя exe",
+}
+
+
+def tr(text: str) -> str:
+    return UI_TEXT_RU.get(text, text)
+
+
+VK_NAME_MAP: dict[int, str] = {
+    0x08: "Backspace", 0x09: "Tab", 0x0D: "Enter",
+    0x10: "Shift", 0x11: "Ctrl", 0x12: "Alt", 0x14: "Caps Lock",
+    0x1B: "Esc", 0x20: "Space",
+    0x21: "Page Up", 0x22: "Page Down", 0x23: "End", 0x24: "Home",
+    0x25: "←", 0x26: "↑", 0x27: "→", 0x28: "↓",
+    0x2D: "Insert", 0x2E: "Delete",
+    0x30: "0", 0x31: "1", 0x32: "2", 0x33: "3", 0x34: "4",
+    0x35: "5", 0x36: "6", 0x37: "7", 0x38: "8", 0x39: "9",
+    0x41: "A", 0x42: "B", 0x43: "C", 0x44: "D", 0x45: "E",
+    0x46: "F", 0x47: "G", 0x48: "H", 0x49: "I", 0x4A: "J",
+    0x4B: "K", 0x4C: "L", 0x4D: "M", 0x4E: "N", 0x4F: "O",
+    0x50: "P", 0x51: "Q", 0x52: "R", 0x53: "S", 0x54: "T",
+    0x55: "U", 0x56: "V", 0x57: "W", 0x58: "X", 0x59: "Y",
+    0x5A: "Z",
+    0x5B: "Win", 0x5C: "Win", 0x5D: "Menu",
+    0x60: "Numpad 0", 0x61: "Numpad 1", 0x62: "Numpad 2", 0x63: "Numpad 3",
+    0x64: "Numpad 4", 0x65: "Numpad 5", 0x66: "Numpad 6", 0x67: "Numpad 7",
+    0x68: "Numpad 8", 0x69: "Numpad 9",
+    0x6A: "Numpad *", 0x6B: "Numpad +", 0x6D: "Numpad -", 0x6E: "Numpad .",
+    0x6F: "Numpad /",
+    0x70: "F1", 0x71: "F2", 0x72: "F3", 0x73: "F4",
+    0x74: "F5", 0x75: "F6", 0x76: "F7", 0x77: "F8",
+    0x78: "F9", 0x79: "F10", 0x7A: "F11", 0x7B: "F12",
+    0x90: "Num Lock", 0x91: "Scroll Lock",
+    0xBA: ";", 0xBB: "=", 0xBC: ",", 0xBD: "-", 0xBE: ".",
+    0xBF: "/", 0xC0: "`",
+    0xDB: "[", 0xDC: "\\", 0xDD: "]", 0xDE: "'",
+}
+
+
+def vk_code_to_name(code: int) -> str:
+    if code == 0:
+        return "—"
+    return VK_NAME_MAP.get(code, f"VK_{code}")

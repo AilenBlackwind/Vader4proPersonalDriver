@@ -1,0 +1,17 @@
+# Build outputs
+main.exe
+*.obj
+*.exp
+vc140.pdb
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor
+.vscode/
+
+# Junk artifacts
+cl
+python
