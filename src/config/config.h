@@ -35,6 +35,7 @@ struct GyroProfile {
     double accel_threshold = 10.0;
     double accel_limit = 2.0;
     bool joystick_mode = false;
+    bool joy_overlay_enabled = false;
     double joy_deadzone = 1.5;
     double joy_exponent = 2.0;
     double joy_max_speed = 1.0;

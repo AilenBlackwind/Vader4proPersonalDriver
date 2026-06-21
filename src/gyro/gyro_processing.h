@@ -20,6 +20,8 @@ struct GyroState {
     OneEuroFilter fY;
     OneEuroFilter fP;
     OneEuroFilter fR;
+    OneEuroFilter joyFY;
+    OneEuroFilter joyFP;
     int prevMode = -1;
     bool k360_down = false;
     bool k180_down = false;

@@ -6,6 +6,68 @@
 
 #include "joystick_mode.h"
 
+namespace {
+
+void ApplyDirectGyroMode(double rawY,
+                         double rawP,
+                         double rawR,
+                         double dt,
+                         GyroState& s,
+                         const GyroProfile& p,
+                         double& inputY,
+                         double& inputP,
+                         double& inputR,
+                         double& accel) {
+    if (fabs(rawY) < p.gyro_deadzone) rawY = 0;
+    if (fabs(rawP) < p.gyro_deadzone) rawP = 0;
+
+    double absR = fabs(rawR);
+    double rollPrecisionThreshold = fmax(p.roll_precision_threshold, p.roll_deadzone);
+    if (absR < p.roll_deadzone) {
+        inputR = 0;
+    } else if (rollPrecisionThreshold > p.roll_deadzone && absR < rollPrecisionThreshold) {
+        inputR = (rawR > 0 ? 1 : -1) *
+                 pow((absR - p.roll_deadzone) / (rollPrecisionThreshold - p.roll_deadzone),
+                     p.roll_precision_power) *
+                 rollPrecisionThreshold;
+    } else {
+        inputR = rawR;
+    }
+
+    double rawMagYP = sqrt(rawY * rawY + rawP * rawP);
+    if (rawMagYP > 0.0 && rawMagYP < p.precision_threshold) {
+        double f = pow(rawMagYP / p.precision_threshold, p.precision_power);
+        inputY = rawY * f;
+        inputP = rawP * f;
+        if (p.recovery_enabled) {
+            s.lostY += (rawY - inputY) * dt * p.recovery_rate;
+            s.lostP += (rawP - inputP) * dt * p.recovery_rate;
+        }
+    } else {
+        inputY = rawY;
+        inputP = rawP;
+        if (p.recovery_enabled && rawMagYP > 0.0) {
+            double rY = fmin(fabs(s.lostY), fabs(inputY)) * (s.lostY > 0 ? 1 : -1);
+            double rP = fmin(fabs(s.lostP), fabs(inputP)) * (s.lostP > 0 ? 1 : -1);
+            inputY += rY;
+            inputP += rP;
+            s.lostY -= rY;
+            s.lostP -= rP;
+        }
+    }
+
+    inputY = s.fY.filter(inputY, s.absT);
+    inputP = s.fP.filter(inputP, s.absT);
+    inputR = s.fR.filter(inputR, s.absT);
+
+    double fMag = sqrt(inputY * inputY + inputP * inputP + inputR * inputR);
+    if (p.accel_rate > 0 && fMag > p.accel_threshold) {
+        accel = fmin(p.accel_limit, 1.0 + (fMag - p.accel_threshold) * p.accel_rate);
+    }
+}
+
+}  // namespace
+
 // Helper for manual testing: applies an instant mouse turn using profile sensitivity.
 void PerformRotation(double deg, const GyroProfile& p) {
     int move = (int)std::round(deg * (p.dots_per_360 / 360.0));
@@ -103,6 +165,8 @@ void ApplyGyroMovement(float rY,
         s.fY.filter(0, s.absT);
         s.fP.filter(0, s.absT);
         s.fR.filter(0, s.absT);
+        s.joyFY.filter(0, s.absT);
+        s.joyFP.filter(0, s.absT);
         s.accX = 0;
         s.accY = 0;
         s.tiltY = 0;
@@ -121,54 +185,17 @@ void ApplyGyroMovement(float rY,
     double inputR = 0;
     double accel = 1.0;
 
-    if (p.joystick_mode) {
+    if (p.joystick_mode && !p.joy_overlay_enabled) {
         ApplyJoystickMode(rawY, rawP, dt, s, p, inputY, inputP);
     } else {
-        if (fabs(rawY) < p.gyro_deadzone) rawY = 0;
-        if (fabs(rawP) < p.gyro_deadzone) rawP = 0;
+        ApplyDirectGyroMode(rawY, rawP, rawR, dt, s, p, inputY, inputP, inputR, accel);
 
-        double absR = fabs(rawR);
-        double rollPrecisionThreshold = fmax(p.roll_precision_threshold, p.roll_deadzone);
-        if (absR < p.roll_deadzone) {
-            inputR = 0;
-        } else if (rollPrecisionThreshold > p.roll_deadzone && absR < rollPrecisionThreshold) {
-            inputR = (rawR > 0 ? 1 : -1) *
-                     pow((absR - p.roll_deadzone) / (rollPrecisionThreshold - p.roll_deadzone),
-                         p.roll_precision_power) *
-                     rollPrecisionThreshold;
-        } else {
-            inputR = rawR;
-        }
-
-        double rawMagYP = sqrt(rawY * rawY + rawP * rawP);
-        if (rawMagYP > 0.0 && rawMagYP < p.precision_threshold) {
-            double f = pow(rawMagYP / p.precision_threshold, p.precision_power);
-            inputY = rawY * f;
-            inputP = rawP * f;
-            if (p.recovery_enabled) {
-                s.lostY += (rawY - inputY) * dt * p.recovery_rate;
-                s.lostP += (rawP - inputP) * dt * p.recovery_rate;
-            }
-        } else {
-            inputY = rawY;
-            inputP = rawP;
-            if (p.recovery_enabled && rawMagYP > 0.0) {
-                double rY = fmin(fabs(s.lostY), fabs(inputY)) * (s.lostY > 0 ? 1 : -1);
-                double rP = fmin(fabs(s.lostP), fabs(inputP)) * (s.lostP > 0 ? 1 : -1);
-                inputY += rY;
-                inputP += rP;
-                s.lostY -= rY;
-                s.lostP -= rP;
-            }
-        }
-
-        inputY = s.fY.filter(inputY, s.absT);
-        inputP = s.fP.filter(inputP, s.absT);
-        inputR = s.fR.filter(inputR, s.absT);
-
-        double fMag = sqrt(inputY * inputY + inputP * inputP + inputR * inputR);
-        if (p.accel_rate > 0 && fMag > p.accel_threshold) {
-            accel = fmin(p.accel_limit, 1.0 + (fMag - p.accel_threshold) * p.accel_rate);
+        if (p.joystick_mode && p.joy_overlay_enabled) {
+            double stickY = 0.0;
+            double stickP = 0.0;
+            ApplyJoystickMode(rawY, rawP, dt, s, p, stickY, stickP);
+            inputY += stickY;
+            inputP += stickP;
         }
     }
 

@@ -5,23 +5,55 @@
 
 namespace {
 
-double ApplyInputDeadzone(double value, double deadzone) {
-    double mag = fabs(value);
-    if (mag <= deadzone) return 0.0;
-    return (value > 0 ? 1.0 : -1.0) * (mag - deadzone);
-}
-
 double MoveTowardZero(double value, double maxStep) {
     if (value > 0.0) return fmax(0.0, value - maxStep);
     if (value < 0.0) return fmin(0.0, value + maxStep);
     return 0.0;
 }
 
-double ShapeTilt(double tilt, double deadzone, double limit, double exponent, double maxSpeed) {
-    double mag = fabs(tilt);
-    if (mag <= deadzone || limit <= deadzone) return 0.0;
+void ApplyRadialDeadzone(double x, double y, double deadzone, double& outX, double& outY) {
+    double mag = sqrt(x * x + y * y);
+    if (mag <= deadzone || mag <= 0.0) {
+        outX = 0.0;
+        outY = 0.0;
+        return;
+    }
+
+    double scaledMag = mag - deadzone;
+    outX = (x / mag) * scaledMag;
+    outY = (y / mag) * scaledMag;
+}
+
+void ClampRadial(double& x, double& y, double limit) {
+    double mag = sqrt(x * x + y * y);
+    if (mag <= limit || mag <= 0.0) return;
+
+    double scale = limit / mag;
+    x *= scale;
+    y *= scale;
+}
+
+void ShapeTiltVector(double tiltX,
+                     double tiltY,
+                     double deadzone,
+                     double limit,
+                     double exponent,
+                     double maxSpeed,
+                     double verticalScale,
+                     double& outX,
+                     double& outY) {
+    deadzone = fmax(0.0, deadzone);
+    double mag = sqrt(tiltX * tiltX + tiltY * tiltY);
+    if (mag <= deadzone || limit <= deadzone || mag <= 0.0) {
+        outX = 0.0;
+        outY = 0.0;
+        return;
+    }
+
     double normalized = std::clamp((mag - deadzone) / (limit - deadzone), 0.0, 1.0);
-    return (tilt > 0 ? 1.0 : -1.0) * pow(normalized, exponent) * maxSpeed * 5.0;
+    double shapedMag = pow(normalized, exponent) * maxSpeed * 5.0;
+    outX = (tiltX / mag) * shapedMag;
+    outY = (tiltY / mag) * shapedMag * verticalScale;
 }
 
 }  // namespace
@@ -33,28 +65,27 @@ void ApplyJoystickMode(double rawY,
                        const GyroProfile& profile,
                        double& inputY,
                        double& inputP) {
-    double inputTiltY =
-        ApplyInputDeadzone(rawY, profile.joy_input_deadzone) * profile.joy_input_rate * dt;
-    double inputTiltP =
-        ApplyInputDeadzone(rawP, profile.joy_input_deadzone) * profile.joy_input_rate * dt;
+    double outputDeadzone = fmax(0.0, profile.joy_deadzone);
+    double inputTiltY = 0.0;
+    double inputTiltP = 0.0;
+    ApplyRadialDeadzone(rawY, rawP, profile.joy_input_deadzone, inputTiltY, inputTiltP);
 
-    state.tiltY += inputTiltY;
-    state.tiltP += inputTiltP;
-
-    double centeringRate = profile.joy_centering + profile.joy_auto_recenter;
-    double centeringStep = centeringRate * dt;
-    state.tiltY = MoveTowardZero(state.tiltY, centeringStep);
-    state.tiltP = MoveTowardZero(state.tiltP, centeringStep);
+    state.tiltY += inputTiltY * profile.joy_input_rate * dt;
+    state.tiltP += inputTiltP * profile.joy_input_rate * dt;
 
     double tiltLimit = fmax(0.01, profile.joy_tilt_limit);
-    state.tiltY = std::clamp(state.tiltY, -tiltLimit, tiltLimit);
-    state.tiltP = std::clamp(state.tiltP, -tiltLimit, tiltLimit);
+    ClampRadial(state.tiltY, state.tiltP, tiltLimit);
 
-    inputY = ShapeTilt(state.tiltY, profile.joy_deadzone, tiltLimit, profile.joy_exponent,
-                       profile.joy_max_speed);
-    inputP = ShapeTilt(state.tiltP, profile.joy_deadzone, tiltLimit, profile.joy_exponent,
-                       profile.joy_max_speed * profile.joy_vertical_scale);
+    double tiltMag = sqrt(state.tiltY * state.tiltY + state.tiltP * state.tiltP);
+    bool inputNeutral = inputTiltY == 0.0 && inputTiltP == 0.0;
+    if (inputNeutral && tiltMag <= outputDeadzone) {
+        state.tiltY = MoveTowardZero(state.tiltY, profile.joy_auto_recenter * dt);
+        state.tiltP = MoveTowardZero(state.tiltP, profile.joy_auto_recenter * dt);
+    }
 
-    inputY = state.fY.filter(inputY, state.absT);
-    inputP = state.fP.filter(inputP, state.absT);
+    ShapeTiltVector(state.tiltY, state.tiltP, outputDeadzone, tiltLimit, profile.joy_exponent,
+                    profile.joy_max_speed, profile.joy_vertical_scale, inputY, inputP);
+
+    inputY = state.joyFY.filter(inputY, state.absT);
+    inputP = state.joyFP.filter(inputP, state.absT);
 }

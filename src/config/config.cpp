@@ -77,6 +77,7 @@ void LoadProfile(const json& j, GyroProfile& p) {
     p.accel_threshold = j.value("accel_threshold", p.accel_threshold);
     p.accel_limit = j.value("accel_limit", p.accel_limit);
     p.joystick_mode = j.value("joystick_mode", p.joystick_mode);
+    p.joy_overlay_enabled = j.value("joy_overlay_enabled", p.joy_overlay_enabled);
     p.joy_deadzone = j.value("joy_deadzone", p.joy_deadzone);
     p.joy_exponent = j.value("joy_exponent", p.joy_exponent);
     p.joy_max_speed = j.value("joy_max_speed", p.joy_max_speed);

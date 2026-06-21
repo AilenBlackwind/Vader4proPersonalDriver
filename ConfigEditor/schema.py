@@ -571,6 +571,15 @@ def profile_fields(section: str, prefix: tuple[str, ...]) -> list[FieldDef]:
         field(
             section,
             "Joystick Mode",
+            "Joystick overlay",
+            "bool",
+            path=prefix + ("joy_overlay_enabled",),
+            help_text="Mixes virtual stick movement on top of normal gyro movement instead of replacing it.",
+            visible_if=joystick_enabled,
+        ),
+        field(
+            section,
+            "Joystick Mode",
             "Joystick deadzone",
             "float",
             path=prefix + ("joy_deadzone",),
@@ -649,7 +658,7 @@ def profile_fields(section: str, prefix: tuple[str, ...]) -> list[FieldDef]:
         field(
             section,
             "Joystick Mode",
-            "Joystick centering",
+            "Joystick centering (inactive)",
             "float",
             path=prefix + ("joy_centering",),
             min_value=0.0,

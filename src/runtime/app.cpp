@@ -19,14 +19,16 @@ short read_le(unsigned char lo, unsigned char hi) {
 // Applies filter and LED state when the active profile changes.
 void RefreshModeState(hid_device* h, GyroState& state, GyroProfile& profile, int mode,
                       int& cur_r, int& cur_g, int& cur_b) {
-    double fc = profile.joystick_mode ? profile.joy_filter_cutoff : profile.euro_min_cutoff;
-    double fb = profile.joystick_mode ? profile.joy_filter_beta : profile.euro_beta;
-    state.fY.updateParams(fc, fb);
-    state.fP.updateParams(fc, fb);
+    state.fY.updateParams(profile.euro_min_cutoff, profile.euro_beta);
+    state.fP.updateParams(profile.euro_min_cutoff, profile.euro_beta);
     state.fR.updateParams(profile.roll_euro_min_cutoff, profile.roll_euro_beta);
+    state.joyFY.updateParams(profile.joy_filter_cutoff, profile.joy_filter_beta);
+    state.joyFP.updateParams(profile.joy_filter_cutoff, profile.joy_filter_beta);
     state.fY.reset();
     state.fP.reset();
     state.fR.reset();
+    state.joyFY.reset();
+    state.joyFP.reset();
     state.accX = 0;
     state.accY = 0;
     state.tiltY = 0;
