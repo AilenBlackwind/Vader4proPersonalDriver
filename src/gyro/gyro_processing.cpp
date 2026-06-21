@@ -75,7 +75,7 @@ void HandleCalibration(float rY,
             s.bP = avgP;
             s.bR = avgR;
             s.bias_ready = true;
-        } else if (mode == 0) {
+        } else {
             double blend = 1.0 - exp(-dt * 1.5);
             s.bY += (avgY - s.bY) * blend;
             s.bP += (avgP - s.bP) * blend;
@@ -124,14 +124,18 @@ void ApplyGyroMovement(float rY,
     if (p.joystick_mode) {
         ApplyJoystickMode(rawY, rawP, dt, s, p, inputY, inputP);
     } else {
+        if (fabs(rawY) < p.gyro_deadzone) rawY = 0;
+        if (fabs(rawP) < p.gyro_deadzone) rawP = 0;
+
         double absR = fabs(rawR);
+        double rollPrecisionThreshold = fmax(p.roll_precision_threshold, p.roll_deadzone);
         if (absR < p.roll_deadzone) {
             inputR = 0;
-        } else if (absR < p.roll_precision_threshold) {
+        } else if (rollPrecisionThreshold > p.roll_deadzone && absR < rollPrecisionThreshold) {
             inputR = (rawR > 0 ? 1 : -1) *
-                     pow((absR - p.roll_deadzone) / (p.roll_precision_threshold - p.roll_deadzone),
+                     pow((absR - p.roll_deadzone) / (rollPrecisionThreshold - p.roll_deadzone),
                          p.roll_precision_power) *
-                     p.roll_precision_threshold;
+                     rollPrecisionThreshold;
         } else {
             inputR = rawR;
         }

@@ -1,6 +1,7 @@
 {
   "apps": {
     "FalloutNV.exe": "configs/FNV.json",
-    "FSD-Win64-Shipping.exe": "configs/DRG.json"
+    "FSD-Win64-Shipping.exe": "configs/DRG.json",
+    "AmidEvil-Win64-Shipping.exe": "configs/AmidEvil.json"
   }
 }

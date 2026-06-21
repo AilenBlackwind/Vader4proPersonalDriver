@@ -24,6 +24,7 @@ struct GyroProfile {
     double precision_threshold = 0.2;
     double precision_power = 2.0;
     double roll_deadzone = 0.15;
+    double gyro_deadzone = 0.0;
     double roll_precision_threshold = 0.6;
     double roll_precision_power = 2.5;
     double roll_euro_min_cutoff = 0.8;

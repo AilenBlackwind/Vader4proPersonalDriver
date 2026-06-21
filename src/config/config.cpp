@@ -66,6 +66,7 @@ void LoadProfile(const json& j, GyroProfile& p) {
     p.precision_threshold = j.value("precision_threshold", p.precision_threshold);
     p.precision_power = j.value("precision_power", p.precision_power);
     p.roll_deadzone = j.value("roll_deadzone", p.roll_deadzone);
+    p.gyro_deadzone = j.value("gyro_deadzone", p.gyro_deadzone);
     p.roll_precision_threshold = j.value("roll_precision_threshold", p.roll_precision_threshold);
     p.roll_precision_power = j.value("roll_precision_power", p.roll_precision_power);
     p.roll_euro_min_cutoff = j.value("roll_euro_min_cutoff", p.roll_euro_min_cutoff);

@@ -59,6 +59,7 @@ UI_TEXT_RU: dict[str, str] = {
     "Rumble test sent": "Тест вибрации отправлен",
     "LED test sent": "Тест LED отправлен",
     "Real world sensitivity": "Чувствительность",
+    "Gyro deadzone": "Мёртвая зона гироскопа",
     "Dots per 360": "Dots per 360",
     "Vertical scale": "Вертикальный масштаб",
     "Invert roll": "Инвертировать roll",
