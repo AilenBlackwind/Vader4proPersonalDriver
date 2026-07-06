@@ -60,27 +60,33 @@ void ShapeTiltVector(double tiltX,
 
 void ApplyJoystickMode(double rawY,
                        double rawP,
+                       double rawR,
                        double dt,
                        GyroState& state,
                        const GyroProfile& profile,
                        double& inputY,
-                       double& inputP) {
+                       double& inputP,
+                       bool freezeNeutral) {
     double outputDeadzone = fmax(0.0, profile.joy_deadzone);
     double inputTiltY = 0.0;
     double inputTiltP = 0.0;
+    double inputTiltR = 0.0;
+    double dummy = 0.0;
     ApplyRadialDeadzone(rawY, rawP, profile.joy_input_deadzone, inputTiltY, inputTiltP);
+    ApplyRadialDeadzone(rawR, 0.0, profile.joy_input_deadzone, inputTiltR, dummy);
 
-    state.tiltY += inputTiltY * profile.joy_input_rate * dt;
+    double rollInv = profile.invert_roll ? -1.0 : 1.0;
+    double rollContrib = inputTiltR * profile.joy_roll_weight * rollInv;
+    state.tiltY += (inputTiltY + rollContrib) * profile.joy_input_rate * dt;
     state.tiltP += inputTiltP * profile.joy_input_rate * dt;
 
     double tiltLimit = fmax(0.01, profile.joy_tilt_limit);
     ClampRadial(state.tiltY, state.tiltP, tiltLimit);
 
-    double tiltMag = sqrt(state.tiltY * state.tiltY + state.tiltP * state.tiltP);
-    bool inputNeutral = inputTiltY == 0.0 && inputTiltP == 0.0;
-    if (inputNeutral && tiltMag <= outputDeadzone) {
-        state.tiltY = MoveTowardZero(state.tiltY, profile.joy_auto_recenter * dt);
-        state.tiltP = MoveTowardZero(state.tiltP, profile.joy_auto_recenter * dt);
+    bool inputNeutral = inputTiltY == 0.0 && inputTiltP == 0.0 && inputTiltR == 0.0;
+    if (inputNeutral && !freezeNeutral) {
+        state.tiltY = MoveTowardZero(state.tiltY, (profile.joy_centering + profile.joy_auto_recenter) * dt);
+        state.tiltP = MoveTowardZero(state.tiltP, (profile.joy_centering + profile.joy_auto_recenter) * dt);
     }
 
     ShapeTiltVector(state.tiltY, state.tiltP, outputDeadzone, tiltLimit, profile.joy_exponent,

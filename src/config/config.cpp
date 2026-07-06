@@ -89,6 +89,7 @@ void LoadProfile(const json& j, GyroProfile& p) {
     p.joy_filter_cutoff = j.value("joy_filter_cutoff", p.joy_filter_cutoff);
     p.joy_filter_beta = j.value("joy_filter_beta", p.joy_filter_beta);
     p.joy_auto_recenter = j.value("joy_auto_recenter", p.joy_auto_recenter);
+    p.joy_roll_weight = j.value("joy_roll_weight", p.joy_roll_weight);
     p.smooth_speed_threshold = j.value("smooth_speed_threshold", p.smooth_speed_threshold);
     p.smooth_max_strength = j.value("smooth_max_strength", p.smooth_max_strength);
     p.smooth_lerp_speed = j.value("smooth_lerp_speed", p.smooth_lerp_speed);

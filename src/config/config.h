@@ -47,6 +47,7 @@ struct GyroProfile {
     double joy_filter_cutoff = 1.5;
     double joy_filter_beta = 0.05;
     double joy_auto_recenter = 0.5;
+    double joy_roll_weight = 0.0;
     double smooth_speed_threshold = 50.0;
     double smooth_max_strength = 0.3;
     double smooth_lerp_speed = 5.0;

@@ -185,29 +185,32 @@ void ApplyGyroMovement(float rY,
     double inputR = 0;
     double accel = 1.0;
 
-    if (p.joystick_mode && !p.joy_overlay_enabled) {
-        ApplyJoystickMode(rawY, rawP, dt, s, p, inputY, inputP);
+    bool pureJoystick = p.joystick_mode && !p.joy_overlay_enabled;
+    bool joystickActive = p.joystick_mode;
+
+    if (pureJoystick) {
+        ApplyJoystickMode(rawY, rawP, rawR, dt, s, p, inputY, inputP, true);
     } else {
         ApplyDirectGyroMode(rawY, rawP, rawR, dt, s, p, inputY, inputP, inputR, accel);
 
         if (p.joystick_mode && p.joy_overlay_enabled) {
             double stickY = 0.0;
             double stickP = 0.0;
-            ApplyJoystickMode(rawY, rawP, dt, s, p, stickY, stickP);
+            ApplyJoystickMode(rawY, rawP, rawR, dt, s, p, stickY, stickP, false);
             inputY += stickY;
             inputP += stickP;
         }
-    }
 
-    if (p.smooth_max_strength < 1.0) {
-        double spd = sqrt(inputY * inputY + inputP * inputP);
-        double trg = (spd < p.smooth_speed_threshold && spd > 0)
-                         ? p.smooth_max_strength +
-                               (1.0 - p.smooth_max_strength) * (spd / p.smooth_speed_threshold)
-                         : 1.0;
-        s.smooth_factor += (trg - s.smooth_factor) * (1.0 - exp(-p.smooth_lerp_speed * dt));
-        inputY *= s.smooth_factor;
-        inputP *= s.smooth_factor;
+        if (!joystickActive && p.smooth_max_strength < 1.0) {
+            double spd = sqrt(inputY * inputY + inputP * inputP);
+            double trg = (spd < p.smooth_speed_threshold && spd > 0)
+                             ? p.smooth_max_strength +
+                                   (1.0 - p.smooth_max_strength) * (spd / p.smooth_speed_threshold)
+                             : 1.0;
+            s.smooth_factor += (trg - s.smooth_factor) * (1.0 - exp(-p.smooth_lerp_speed * dt));
+            inputY *= s.smooth_factor;
+            inputP *= s.smooth_factor;
+        }
     }
 
     if (p.invert_roll) inputR = -inputR;
@@ -229,7 +232,7 @@ void ApplyGyroMovement(float rY,
         SendInput(1, &in, sizeof(INPUT));
         s.accX -= mx;
         s.accY -= my;
-    } else {
+    } else if (!joystickActive) {
         s.accX *= exp(-5.0 * dt);
         s.accY *= exp(-5.0 * dt);
     }
