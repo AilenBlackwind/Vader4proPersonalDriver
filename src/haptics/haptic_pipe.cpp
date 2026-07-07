@@ -4,14 +4,14 @@
 #include <stdio.h>
 
 // Low-level rumble packet sender used by both the runtime and pipe bridge.
-void SendRumble(hid_device* h, uint8_t left, uint8_t right, uint8_t lT, uint8_t rT) {
+void SendRumble(SDL_hid_device* h, uint8_t left, uint8_t right, uint8_t lT, uint8_t rT) {
     if (!h) return;
 
     unsigned char buf[12] = {0x05, 0x0F, left, right, lT, rT, 0, 0, 0, 0, 0, 0};
-    hid_write(h, buf, sizeof(buf));
+    SDL_hid_write(h, buf, sizeof(buf));
 }
 
-void HapticThread(hid_device* h,
+void HapticThread(SDL_hid_device* h,
                   std::atomic<bool>& haptic_running,
                   std::atomic<bool>& device_connected) {
     // Bridges a small named-pipe protocol to controller rumble packets.

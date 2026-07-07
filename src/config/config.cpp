@@ -69,10 +69,6 @@ void LoadProfile(const json& j, GyroProfile& p) {
     p.gyro_deadzone = j.value("gyro_deadzone", p.gyro_deadzone);
     p.roll_precision_threshold = j.value("roll_precision_threshold", p.roll_precision_threshold);
     p.roll_precision_power = j.value("roll_precision_power", p.roll_precision_power);
-    p.roll_euro_min_cutoff = j.value("roll_euro_min_cutoff", p.roll_euro_min_cutoff);
-    p.roll_euro_beta = j.value("roll_euro_beta", p.roll_euro_beta);
-    p.euro_min_cutoff = j.value("euro_min_cutoff", p.euro_min_cutoff);
-    p.euro_beta = j.value("euro_beta", p.euro_beta);
     p.accel_rate = j.value("accel_rate", p.accel_rate);
     p.accel_threshold = j.value("accel_threshold", p.accel_threshold);
     p.accel_limit = j.value("accel_limit", p.accel_limit);
@@ -131,9 +127,6 @@ bool LoadConfig(const std::string& path, Config& c) {
 
     try {
         json j = json::parse(f, nullptr, true, true);
-        c.autocalib_time = j.value("autocalib_time", c.autocalib_time);
-        c.autocalib_tolerance = j.value("autocalib_tolerance", c.autocalib_tolerance);
-        c.accel_still_threshold = j.value("accel_still_threshold", c.accel_still_threshold);
         c.accel_z_offset = j.value("accel_z_offset", c.accel_z_offset);
         c.trigger_threshold_low = j.value("trigger_threshold_low", c.trigger_threshold_low);
         c.trigger_threshold_high = j.value("trigger_threshold_high", c.trigger_threshold_high);
@@ -144,6 +137,9 @@ bool LoadConfig(const std::string& path, Config& c) {
         c.key_mode_0 = j.value("key_mode_0", c.key_mode_0);
         c.key_mode_1 = j.value("key_mode_1", c.key_mode_1);
         c.key_mode_2 = j.value("key_mode_2", c.key_mode_2);
+        c.calibration_mode = j.value("calibration_mode", c.calibration_mode);
+        c.calibration_correction_time = j.value("calibration_correction_time", c.calibration_correction_time);
+        c.calibration_key = j.value("calibration_key", c.calibration_key);
         c.mode_source = j.value("mode_source", c.mode_source);
         c.mode_trigger_byte = j.value("mode_trigger_byte", c.mode_trigger_byte);
         c.mode_button_byte = j.value("mode_button_byte", c.mode_button_byte);

@@ -27,10 +27,6 @@ struct GyroProfile {
     double gyro_deadzone = 0.0;
     double roll_precision_threshold = 0.6;
     double roll_precision_power = 2.5;
-    double roll_euro_min_cutoff = 0.8;
-    double roll_euro_beta = 0.01;
-    double euro_min_cutoff = 2.0;
-    double euro_beta = 0.02;
     double accel_rate = 0.0;
     double accel_threshold = 10.0;
     double accel_limit = 2.0;
@@ -66,10 +62,7 @@ struct GyroProfile {
 
 // Top-level runtime config loaded from JSON and hot-swapped by the watcher thread.
 struct Config {
-    double autocalib_time = 2.0;
-    double autocalib_tolerance = 3.0;
-    double accel_still_threshold = 0.5;
-    float accel_z_offset = 32.0f;
+    float accel_z_offset = 0.0f;
     int trigger_threshold_low = 10;
     int trigger_threshold_high = 200;
     bool test_keys_enabled = false;
@@ -79,6 +72,9 @@ struct Config {
     int key_mode_0 = 0;
     int key_mode_1 = 0;
     int key_mode_2 = 0;
+    int calibration_mode = 3;
+    double calibration_correction_time = 2.0;
+    int calibration_key = 0;
     std::string mode_source = "trigger";
     int mode_trigger_byte = 23;
     int mode_button_byte = 9;

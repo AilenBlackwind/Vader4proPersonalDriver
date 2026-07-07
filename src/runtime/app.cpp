@@ -1,10 +1,12 @@
 #include "app.h"
 
 #include <windows.h>
-
+#include <cmath>
+#include <cstdio>
 #include <thread>
 
-#include "../../hidapi.h"
+#include <SDL3/SDL.h>
+
 #include "../config/config.h"
 #include "../gyro/gyro_processing.h"
 #include "../gyro/profile_logic.h"
@@ -12,23 +14,13 @@
 
 namespace {
 
-short read_le(unsigned char lo, unsigned char hi) {
-    return (short)(lo | (hi << 8));
-}
-
-// Applies filter and LED state when the active profile changes.
-void RefreshModeState(hid_device* h, GyroState& state, GyroProfile& profile, int mode,
+void RefreshModeState(SDL_hid_device* out, GyroState& state, GyroProfile& profile, int mode,
                       int& cur_r, int& cur_g, int& cur_b) {
-    state.fY.updateParams(profile.euro_min_cutoff, profile.euro_beta);
-    state.fP.updateParams(profile.euro_min_cutoff, profile.euro_beta);
-    state.fR.updateParams(profile.roll_euro_min_cutoff, profile.roll_euro_beta);
     state.joyFY.updateParams(profile.joy_filter_cutoff, profile.joy_filter_beta);
     state.joyFP.updateParams(profile.joy_filter_cutoff, profile.joy_filter_beta);
-    state.fY.reset();
-    state.fP.reset();
-    state.fR.reset();
     state.joyFY.reset();
     state.joyFP.reset();
+    state.motion.Reset();
     state.accX = 0;
     state.accY = 0;
     state.tiltY = 0;
@@ -41,26 +33,26 @@ void RefreshModeState(hid_device* h, GyroState& state, GyroProfile& profile, int
     state.prevMode = mode;
 
     if (mode == 0) {
-        SendLED(h, 0, 0, 0);
+        SendLED(out, 0, 0, 0);
         cur_r = cur_g = cur_b = 0;
     } else {
-        SetProfileLED(h, profile, cur_r, cur_g, cur_b);
+        SetProfileLED(out, profile, cur_r, cur_g, cur_b);
     }
 }
 
-// Runs one connected-device session until the controller disconnects.
-void RunConnectedDeviceLoop(hid_device* h, AppRuntime& runtime) {
+void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
+                            SDL_hid_device* hid_in, SDL_hid_device* hid_out,
+                            AppRuntime& runtime) {
     int cur_r = -1;
     int cur_g = -1;
     int cur_b = -1;
-    const float accScl = 0.03801141343622691f;
 
-    SendLED(h, 0, 0, 0);
+    SendLED(hid_out, 0, 0, 0);
     runtime.device_connected = true;
-    std::thread haptic_thr(HapticThread, h, std::ref(runtime.haptic_running),
+    std::thread haptic_thr(HapticThread, hid_out, std::ref(runtime.haptic_running),
                            std::ref(runtime.device_connected));
 
-    unsigned char buf[64];
+    unsigned char buf[64] = {0};
     LARGE_INTEGER freq, prev, now;
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&prev);
@@ -72,17 +64,28 @@ void RunConnectedDeviceLoop(hid_device* h, AppRuntime& runtime) {
         conf = runtime.active_config;
     }
 
-    while (true) {
-        int res = hid_read(h, buf, 64);
-        if (res < 0) {
-            printf("[DISCONNECTED]\n");
-            runtime.haptic_running = false;
-            runtime.device_connected = false;
-            haptic_thr.join();
-            hid_close(h);
-            break;
+    {
+        auto calMode = static_cast<GamepadMotionHelpers::CalibrationMode>(conf.calibration_mode);
+        state.motion.SetCalibrationMode(calMode);
+        state.motion.Settings.MinStillnessCorrectionTime = (float)conf.calibration_correction_time;
+    }
+
+    bool disconnected = false;
+
+    while (!disconnected) {
+        // Poll SDL events for disconnect detection.
+        SDL_Event e;
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_EVENT_GAMEPAD_REMOVED && e.gdevice.which == gamepad_id) {
+                disconnected = true;
+            }
         }
-        if (res == 0) continue;
+        if (disconnected) break;
+
+        // Non-blocking read of raw HID for button/trigger state.
+        // Stale buf is fine when no report arrives — DetermineMode and
+        // trigger slowdown only need recent values on state transitions.
+        SDL_hid_read_timeout(hid_in, buf, 64, 0);
 
         QueryPerformanceCounter(&now);
         double dt = fmin(0.1, (double)(now.QuadPart - prev.QuadPart) / freq.QuadPart);
@@ -96,20 +99,34 @@ void RunConnectedDeviceLoop(hid_device* h, AppRuntime& runtime) {
             state.prevMode = -1;
             state.toggle_state = false;
             state.prev_toggle_button = false;
+
+            auto calMode = static_cast<GamepadMotionHelpers::CalibrationMode>(conf.calibration_mode);
+            state.motion.SetCalibrationMode(calMode);
+            state.motion.Settings.MinStillnessCorrectionTime = (float)conf.calibration_correction_time;
         }
 
-        float aX = read_le(buf[11], buf[12]) * accScl;
-        float aY = read_le(buf[15], buf[16]) * accScl;
-        float aZ = (read_le(buf[13], buf[14]) + conf.accel_z_offset) * accScl;
+        // Read sensor data from SDL3 gamepad API.
+        // Gyro: rad/s. Accel: m/s².
+        float gyro[3] = {0}, accel[3] = {0};
+        SDL_GetGamepadSensorData(gamepad, SDL_SENSOR_GYRO, gyro, 3);
+        SDL_GetGamepadSensorData(gamepad, SDL_SENSOR_ACCEL, accel, 3);
 
-        // Vader 4 Pro uses a non-standard gyro byte layout in its HID report.
-        // These indices were verified against working values; do not shift them.
-        float rY = (read_le(buf[18], buf[20]) / 512.0f) * 2000.0f;
-        float rP = (read_le(buf[26], buf[27]) / 512.0f) * 2000.0f;
-        float rR =
-            (float)((((double)read_le(buf[29], buf[30]) + 32768.0) / 65535.0 * 2.0) - 1.0) *
-            2000.0f;
+        // Replicate the old code's axis convention:
+        //   ProcessMotion was called with (gyroY, gyroX, gyroZ) from raw HID bytes.
+        //   SDL3 gyro is (roll, pitch, yaw) = (X, Y, Z).
+        //   gyro[1] (pitch, Y) → rY (was gyro Y data)
+        //   gyro[0] (roll, X)  → rP (was gyro X data)
+        //   gyro[2] (yaw, Z)   → rR (was gyro Z data)
+        // Gyro: rad/s → °/s, then bias-corrected by EstimateBias.
+        // Accel: m/s² → G (/ 9.80665).
+        float rY = gyro[1] * 57.2958f;
+        float rP = gyro[0] * 57.2958f;
+        float rR = gyro[2] * 57.2958f;
+        float aX = accel[0] / 9.80665f;
+        float aY = accel[1] / 9.80665f;
+        float aZ = (accel[2] / 9.80665f) + conf.accel_z_offset;
 
+        // Mode switching uses the raw HID buffer (same logic as before).
         int mode = DetermineMode(buf, conf, state);
 
         if (conf.manual_mode_keys_enabled) {
@@ -124,7 +141,7 @@ void RunConnectedDeviceLoop(hid_device* h, AppRuntime& runtime) {
         GyroProfile* p = (mode == 2) ? &conf.high_profile : &conf.low_profile;
 
         if (mode != state.prevMode) {
-            RefreshModeState(h, state, *p, mode, cur_r, cur_g, cur_b);
+            RefreshModeState(hid_out, state, *p, mode, cur_r, cur_g, cur_b);
         }
 
         float slowdown = 1.0f;
@@ -168,32 +185,120 @@ void RunConnectedDeviceLoop(hid_device* h, AppRuntime& runtime) {
             }
         }
 
-        HandleCalibration(rY, rP, rR, aX, aY, aZ, dt, state, conf, mode);
-        ApplyGyroMovement(rY, rP, rR, dt, state, *p, mode, slowdown);
+        // Bias correction, then feed gyro (°/s) and accel (G) to sensor fusion.
+        EstimateBias(rY, rP, rR, dt, state, mode);
+        state.motion.ProcessMotion(rY, rP, rR, aX, aY, aZ, (float)dt);
+
+        if (conf.calibration_key != 0) {
+            if (GetAsyncKeyState(conf.calibration_key) & 0x8000) {
+                if (!state.cal_key_down) {
+                    state.motion.StartContinuousCalibration();
+                    state.cal_key_down = true;
+                }
+            } else {
+                if (state.cal_key_down) {
+                    state.motion.PauseContinuousCalibration();
+                    state.cal_key_down = false;
+                }
+            }
+        }
+
+        ApplyGyroMovement(0, 0, 0, dt, state, *p, mode, slowdown);
+
+        // Prevent busy-wait: ~1 ms throttle.
+        SDL_Delay(1);
     }
+
+    printf("[DISCONNECTED]\n");
+    runtime.haptic_running = false;
+    runtime.device_connected = false;
+    haptic_thr.join();
+}
+
+// Opens a raw HID input path for the Vader 4 Pro (best report size).
+SDL_hid_device* OpenHidInput() {
+    struct SDL_hid_device_info* devs = SDL_hid_enumerate(0x04B4, 0x2412);
+    if (!devs) return nullptr;
+
+    const char* best_path = nullptr;
+    int best_bytes = -1;
+    for (auto cur = devs; cur; cur = cur->next) {
+        SDL_hid_device* test = SDL_hid_open_path(cur->path);
+        if (!test) continue;
+        SDL_hid_set_nonblocking(test, 1);
+        unsigned char tmp[64];
+        int res = SDL_hid_read_timeout(test, tmp, 64, 10);
+        if (res > best_bytes) {
+            best_bytes = res;
+            best_path = cur->path;
+        }
+        SDL_hid_close(test);
+    }
+    SDL_hid_free_enumeration(devs);
+
+    if (!best_path) return nullptr;
+    return SDL_hid_open_path(best_path);
 }
 
 }  // namespace
 
 int RunApp(AppRuntime& runtime) {
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_FLYDIGI, "1");
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI, "1");
+
+    if (!SDL_Init(SDL_INIT_GAMEPAD | SDL_INIT_SENSOR)) {
+        printf("SDL_Init failed: %s\n", SDL_GetError());
+        return 1;
+    }
+
     LoadConfig(ResolveActiveConfigPath(), runtime.active_config);
     std::thread watcher_thr(ConfigWatcherThread, std::ref(runtime.config_mutex),
                             std::ref(runtime.active_config), std::ref(runtime.config_changed),
                             std::ref(runtime.app_running));
 
     while (runtime.app_running) {
-        hid_device* h = hid_open(0x04B4, 0x2412, NULL);
-        if (!h) {
-            Sleep(1000);
+        SDL_Gamepad* gamepad = nullptr;
+
+        // Wait for the Vader 4 Pro to appear.
+        while (!gamepad && runtime.app_running) {
+            SDL_Event e;
+            while (SDL_PollEvent(&e)) {
+                if (e.type == SDL_EVENT_GAMEPAD_ADDED) {
+                    gamepad = SDL_OpenGamepad(e.gdevice.which);
+                    break;
+                }
+            }
+            if (!gamepad) SDL_Delay(100);
+        }
+        if (!gamepad) break;
+
+        SDL_JoystickID gamepad_id = SDL_GetGamepadID(gamepad);
+
+        // Enable sensors on the gamepad.
+        SDL_SetGamepadSensorEnabled(gamepad, SDL_SENSOR_GYRO, true);
+        SDL_SetGamepadSensorEnabled(gamepad, SDL_SENSOR_ACCEL, true);
+
+        // Open raw HID for button/trigger parsing and LED/rumble output.
+        SDL_hid_device* hid_in = OpenHidInput();
+        SDL_hid_device* hid_out = SDL_hid_open(0x04B4, 0x2412, nullptr);
+        if (!hid_in || !hid_out) {
+            printf("Failed to open raw HID\n");
+            SDL_CloseGamepad(gamepad);
+            if (hid_in) SDL_hid_close(hid_in);
+            if (hid_out) SDL_hid_close(hid_out);
             continue;
         }
 
-        hid_set_nonblocking(h, 0);
         printf("\n[CONNECTED] Vader 4 Pro\n");
-        RunConnectedDeviceLoop(h, runtime);
+        RunConnectedDeviceLoop(gamepad, gamepad_id, hid_in, hid_out, runtime);
+
+        SDL_hid_close(hid_in);
+        SDL_hid_close(hid_out);
+        SDL_CloseGamepad(gamepad);
     }
 
     runtime.app_running = false;
     watcher_thr.join();
+    SDL_Quit();
     return 0;
 }

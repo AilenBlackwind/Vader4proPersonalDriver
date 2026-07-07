@@ -3,11 +3,11 @@
 #include <math.h>
 
 // Sends the current RGB color to the controller light bar.
-void SendLED(hid_device* h, uint8_t r, uint8_t g, uint8_t b) {
+void SendLED(SDL_hid_device* h, uint8_t r, uint8_t g, uint8_t b) {
     if (!h) return;
 
     unsigned char buf[12] = {0x05, 0xE0, r, g, b, 0, 0, 0, 0, 0, 0, 0};
-    hid_write(h, buf, sizeof(buf));
+    SDL_hid_write(h, buf, sizeof(buf));
 }
 
 int DetermineMode(const unsigned char* buf, const Config& conf, GyroState& state) {
@@ -39,7 +39,7 @@ int DetermineMode(const unsigned char* buf, const Config& conf, GyroState& state
     return mode;
 }
 
-void SetProfileLED(hid_device* h, const GyroProfile& p, int& cr, int& cg, int& cb) {
+void SetProfileLED(SDL_hid_device* h, const GyroProfile& p, int& cr, int& cg, int& cb) {
     // Avoid redundant HID writes when the visible color has not changed.
     int r = (int)fmax(0, fmin(255, p.led_r * p.led_brightness));
     int g = (int)fmax(0, fmin(255, p.led_g * p.led_brightness));

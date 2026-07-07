@@ -1,59 +1,49 @@
 #pragma once
 
 #include "../config/config.h"
+#include "../../GamepadMotionHelpers-main/GamepadMotion.hpp"
 #include "filters.h"
 
-// Runtime-only gyro state: bias, filters, accumulated motion, and mode memory.
+// Runtime-only gyro state: accumulated motion, motion helpers, and mode memory.
 struct GyroState {
-    double bY = 0;
-    double bP = 0;
-    double bR = 0;
-    float base_aX = 0;
-    float base_aY = 0;
-    float base_aZ = 0;
     double accX = 0;
     double accY = 0;
-    double stillT = 0;
     double absT = 0;
     double tiltY = 0;
     double tiltP = 0;
-    OneEuroFilter fY;
-    OneEuroFilter fP;
-    OneEuroFilter fR;
     OneEuroFilter joyFY;
     OneEuroFilter joyFP;
     int prevMode = -1;
     bool k360_down = false;
     bool k180_down = false;
-    bool initialized = false;
+    bool cal_key_down = false;
     double lostY = 0;
     double lostP = 0;
     double smooth_factor = 1.0;
     bool toggle_state = false;
     bool prev_toggle_button = false;
-    bool bias_ready = false;
-    double stillSumY = 0;
-    double stillSumP = 0;
-    double stillSumR = 0;
-    int stillSamples = 0;
     float trigger_slowdown_timer = 0.0f;
     bool trigger_slowdown_prev_active = false;
+    GamepadMotion motion;
+
+    // Bias estimator (replicates original HandleCalibration).
+    bool bias_initialized = false;
+    bool bias_ready = false;
+    float stillT = 0.f;
+    int stillSamples = 0;
+    double stillSumY = 0.0, stillSumP = 0.0, stillSumR = 0.0;
+    float gyroBiasY = 0.f, gyroBiasP = 0.f, gyroBiasR = 0.f;
+    float biasTolerance = 0.5f;     // °/s — max gyro deviation from bias (used post-ready)
+    float biasRawTolerance = 5.f;   // °/s — max raw gyro magnitude before bias_ready
+    float biasCollectionTime = 0.5f; // seconds of stillness before updating
 };
 
 // Manual test helper for fixed-angle turns.
 void PerformRotation(double deg, const GyroProfile& p);
 
-// Updates gyro bias while the controller is considered stationary.
-void HandleCalibration(float rY,
-                       float rP,
-                       float rR,
-                       float aX,
-                       float aY,
-                       float aZ,
-                       double dt,
-                       GyroState& s,
-                       const Config& c,
-                       int mode);
+// Running-average bias estimator (replicates original HandleCalibration).
+// Subtracts estimated bias in place. Only refines bias during mode 0 (gyro off).
+void EstimateBias(float& rY, float& rP, float& rR, double dt, GyroState& s, int mode);
 
 // Converts calibrated gyro input into mouse motion for the active profile.
 void ApplyGyroMovement(float rY,
