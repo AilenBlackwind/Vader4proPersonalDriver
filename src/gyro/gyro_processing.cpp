@@ -35,26 +35,40 @@ void ApplyDirectGyroMode(double rawY,
     }
 
     double rawMagYP = sqrt(rawY * rawY + rawP * rawP);
-    if (rawMagYP > 0.0 && rawMagYP < p.precision_threshold) {
-        double f = pow(rawMagYP / p.precision_threshold, p.precision_power);
+    if (p.smoothing_enabled && p.smoothing_threshold > 0.0) {
+        double x = fmin(rawMagYP / p.smoothing_threshold, 1.0);
+        double g = (1.0 - x) * (1.0 - x);
+        double effT = p.smoothing_time * g;
+        double alpha = (effT <= 1e-6) ? 1.0 : (1.0 - exp(-dt / effT));
+        double tY = rawY * g, tP = rawP * g;
+        s.smoothDY += alpha * (tY - s.smoothDY);
+        s.smoothDP += alpha * (tP - s.smoothDP);
+        inputY = s.smoothDY + rawY * (1.0 - g);
+        inputP = s.smoothDP + rawP * (1.0 - g);
+    } else {
+        double f = 1.0;
+        if (rawMagYP > 0.0 && rawMagYP < p.precision_threshold) {
+            f = pow(rawMagYP / p.precision_threshold, p.precision_power);
+        }
         inputY = rawY * f;
         inputP = rawP * f;
-        if (p.recovery_enabled) {
-            s.lostY += (rawY - inputY) * dt * p.recovery_rate;
-            s.lostP += (rawP - inputP) * dt * p.recovery_rate;
+
+        if (p.recovery_enabled && rawMagYP > 0.0) {
+            double rr = p.precision_power * 0.5;
+            if (f < 1.0) {
+                s.lostY += (rawY - inputY) * dt * rr;
+                s.lostP += (rawP - inputP) * dt * rr;
+            } else {
+                double decay = 1.0 - exp(-dt * rr);
+                double rY = fmin(fabs(s.lostY), fabs(inputY) * decay) * (s.lostY > 0 ? 1 : -1);
+                double rP = fmin(fabs(s.lostP), fabs(inputP) * decay) * (s.lostP > 0 ? 1 : -1);
+                inputY += rY;
+                inputP += rP;
+                s.lostY -= rY;
+                s.lostP -= rP;
+            }
         }
-    } else {
-    inputY = rawY;
-    inputP = rawP;
-    if (p.recovery_enabled && rawMagYP > 0.0) {
-        double rY = fmin(fabs(s.lostY), fabs(inputY)) * (s.lostY > 0 ? 1 : -1);
-        double rP = fmin(fabs(s.lostP), fabs(inputP)) * (s.lostP > 0 ? 1 : -1);
-        inputY += rY;
-        inputP += rP;
-        s.lostY -= rY;
-        s.lostP -= rP;
     }
-}
 
 double fMag = sqrt(inputY * inputY + inputP * inputP + inputR * inputR);
     if (p.accel_rate > 0 && fMag > p.accel_threshold) {
@@ -131,7 +145,6 @@ void EstimateBias(float& rY, float& rP, float& rR, double dt, GyroState& s, int 
             s.gyroBiasR = (float)avgR;
             s.bias_ready = true;
         } else if (mode == 0) {
-            // Only refine bias when gyro is off (controller at rest).
             double blend = 1.0 - exp(-dt * 1.5);
             s.gyroBiasY += (float)((avgY - s.gyroBiasY) * blend);
             s.gyroBiasP += (float)((avgP - s.gyroBiasP) * blend);
@@ -164,7 +177,16 @@ void ApplyGyroMovement(float rY,
         s.tiltP = 0;
         s.lostY = 0;
         s.lostP = 0;
+        s.smoothDY = 0;
+        s.smoothDP = 0;
         s.smooth_factor = 1.0;
+        s.decelHistoryCount = 0;
+        s.decelHistoryHead = 0;
+        s.decelBrakeEngagement = 0.f;
+        s.decelBrakeOmegaRaw = 0.f;
+        s.gyroFX.filter(0, s.absT);
+        s.gyroFP.filter(0, s.absT);
+        s.gyroFR.filter(0, s.absT);
         return;
     }
 
@@ -174,6 +196,17 @@ void ApplyGyroMovement(float rY,
     // convention that users' profiles were tuned for.
     rawY = -rawY;
     rawP = -rawP;
+
+    // Capture pre-curve magnitude for deceleration brake.
+    s.decelBrakeOmegaRaw = sqrtf(rawY * rawY + rawP * rawP);
+    {
+        auto& h = s.decelHistory[s.decelHistoryHead];
+        h.ts = s.absT;
+        h.mag = s.decelBrakeOmegaRaw;
+        s.decelHistoryHead = (s.decelHistoryHead + 1) % 64;
+        if (s.decelHistoryCount < 64) s.decelHistoryCount++;
+    }
+
     double inputY = 0;
     double inputP = 0;
     double inputR = 0;
@@ -207,11 +240,98 @@ void ApplyGyroMovement(float rY,
         }
     }
 
+    if (!pureJoystick) {
+        inputY = s.gyroFX.filter(inputY, s.absT);
+        inputP = s.gyroFP.filter(inputP, s.absT);
+        inputR = s.gyroFR.filter(inputR, s.absT);
+
+        if (p.angle_snap_degrees > 0.f && (inputY != 0.0 || inputP != 0.0)) {
+            double snapRad = p.angle_snap_degrees * M_PI / 180.0;
+            double refAngle = (inputY == 0.0) ? M_PI_2 : atan(fabs(inputP / inputY));
+            double mag = sqrt(inputY * inputY + inputP * inputP);
+            if (p.angle_snap_ease) {
+                auto smoothstep = [](double x) -> double {
+                    x = fmin(fmax(x, 0.0), 1.0);
+                    return x * x * (3.0 - 2.0 * x);
+                };
+                if (refAngle > M_PI_2 - snapRad) {
+                    double t = 1.0 - ((M_PI_2 - refAngle) / snapRad);
+                    double snap = smoothstep(t);
+                    inputY *= (1.0 - snap);
+                    inputP = copysign(mag, inputP);
+                } else if (refAngle < snapRad) {
+                    double t = 1.0 - (refAngle / snapRad);
+                    double snap = smoothstep(t);
+                    inputP *= (1.0 - snap);
+                    inputY = copysign(mag, inputY);
+                }
+            } else {
+                if (refAngle > M_PI_2 - snapRad) {
+                    inputY = 0.0;
+                    inputP = copysign(mag, inputP);
+                } else if (refAngle < snapRad) {
+                    inputP = 0.0;
+                    inputY = copysign(mag, inputY);
+                }
+            }
+        }
+    }
+
     if (p.invert_roll) inputR = -inputR;
     double rad = p.tilt_axis_angle * M_PI / 180.0;
     double hor = ((inputY * cos(rad)) + (inputR * sin(rad))) * p.yaw_weight +
                  ((inputR * cos(rad)) - (inputY * sin(rad))) * p.roll_weight;
     double sens = (p.real_world_sens * p.dots_per_360 / 360.0) * accel * slowdown;
+
+    // Deceleration brake: detects rapid gyro deceleration and dampens it
+    // to reduce overshoot when stopping.
+    float decelMul = 1.f;
+    if (p.decel_brake_strength > 0.f && s.decelHistoryCount >= 10) {
+        constexpr float kWindowSec = 0.010f;
+        constexpr float kSpeedMin = 2.f;
+        constexpr float kSpeedMax = 60.f;
+        constexpr float kEngageTime = 0.010f;
+        constexpr float kReleaseTime = 0.006f;
+        constexpr float kFullBrakeFactor = 3.5f;
+
+        float omega = s.decelBrakeOmegaRaw;
+        float sOld = omega;
+        double targetTs = s.absT - kWindowSec;
+        int idx = s.decelHistoryHead;
+        for (int i = 0; i < s.decelHistoryCount; i++) {
+            idx = (idx - 1 + 64) % 64;
+            if (s.decelHistory[idx].ts <= targetTs) {
+                sOld = s.decelHistory[idx].mag;
+                break;
+            }
+        }
+
+        float slope = (omega - sOld) / kWindowSec;
+        float dNeg = fmaxf(0.f, -slope);
+        float d0 = p.decel_brake_threshold / kWindowSec;
+        float d1 = d0 * kFullBrakeFactor;
+        float denom = (d1 > d0) ? (d1 - d0) : 1e-6f;
+
+        float bInst = 0.f;
+        bool speedGate = (omega >= kSpeedMin && omega <= kSpeedMax);
+        if (speedGate) {
+            bInst = fminf(1.f, fmaxf(0.f, (dNeg - d0) / denom));
+        }
+
+        if (speedGate && bInst > 0.f) {
+            s.decelBrakeEngagement += (float)(dt / kEngageTime) * bInst;
+        } else {
+            s.decelBrakeEngagement -= (float)(dt / kReleaseTime);
+        }
+        s.decelBrakeEngagement = fminf(1.f, fmaxf(0.f, s.decelBrakeEngagement));
+
+        if (s.decelBrakeEngagement > 0.f) {
+            decelMul = 1.f - p.decel_brake_strength * s.decelBrakeEngagement;
+        }
+    }
+
+    hor *= decelMul;
+    inputP *= decelMul;
 
     s.accX += (hor * dt) * sens;
     s.accY += (inputP * dt) * sens * p.vertical_scale;

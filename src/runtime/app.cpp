@@ -20,6 +20,12 @@ void RefreshModeState(SDL_hid_device* out, GyroState& state, GyroProfile& profil
     state.joyFP.updateParams(profile.joy_filter_cutoff, profile.joy_filter_beta);
     state.joyFY.reset();
     state.joyFP.reset();
+    state.gyroFX.updateParams(profile.one_euro_min_cutoff, profile.one_euro_beta);
+    state.gyroFP.updateParams(profile.one_euro_min_cutoff, profile.one_euro_beta);
+    state.gyroFR.updateParams(profile.roll_euro_min_cutoff, profile.roll_euro_beta);
+    state.gyroFX.reset();
+    state.gyroFP.reset();
+    state.gyroFR.reset();
     state.motion.Reset();
     state.accX = 0;
     state.accY = 0;
@@ -68,6 +74,8 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
         auto calMode = static_cast<GamepadMotionHelpers::CalibrationMode>(conf.calibration_mode);
         state.motion.SetCalibrationMode(calMode);
         state.motion.Settings.MinStillnessCorrectionTime = (float)conf.calibration_correction_time;
+        state.motion.Settings.StillnessGyroDelta = 1.2f;
+        state.motion.Settings.StillnessAccelDelta = 0.015f;
     }
 
     bool disconnected = false;
@@ -103,6 +111,8 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
             auto calMode = static_cast<GamepadMotionHelpers::CalibrationMode>(conf.calibration_mode);
             state.motion.SetCalibrationMode(calMode);
             state.motion.Settings.MinStillnessCorrectionTime = (float)conf.calibration_correction_time;
+            state.motion.Settings.StillnessGyroDelta = 1.2f;
+            state.motion.Settings.StillnessAccelDelta = 0.015f;
         }
 
         // Read sensor data from SDL3 gamepad API.

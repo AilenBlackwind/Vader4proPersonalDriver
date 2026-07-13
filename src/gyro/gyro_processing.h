@@ -13,12 +13,17 @@ struct GyroState {
     double tiltP = 0;
     OneEuroFilter joyFY;
     OneEuroFilter joyFP;
+    OneEuroFilter gyroFX;  // main gyro output (pitch/horizontal)
+    OneEuroFilter gyroFP;  // main gyro output (roll/vertical)
+    OneEuroFilter gyroFR;  // roll-axis gyro output
     int prevMode = -1;
     bool k360_down = false;
     bool k180_down = false;
     bool cal_key_down = false;
     double lostY = 0;
     double lostP = 0;
+    double smoothDY = 0;
+    double smoothDP = 0;
     double smooth_factor = 1.0;
     bool toggle_state = false;
     bool prev_toggle_button = false;
@@ -36,6 +41,14 @@ struct GyroState {
     float biasTolerance = 0.5f;     // °/s — max gyro deviation from bias (used post-ready)
     float biasRawTolerance = 5.f;   // °/s — max raw gyro magnitude before bias_ready
     float biasCollectionTime = 0.5f; // seconds of stillness before updating
+
+    // Deceleration brake state
+    struct DecelSample { double ts; float mag; };
+    DecelSample decelHistory[64];
+    int decelHistoryHead = 0;
+    int decelHistoryCount = 0;
+    float decelBrakeEngagement = 0.f;
+    float decelBrakeOmegaRaw = 0.f;
 };
 
 // Manual test helper for fixed-angle turns.
