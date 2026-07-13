@@ -279,8 +279,13 @@ void ApplyGyroMovement(float rY,
 
     if (p.invert_roll) inputR = -inputR;
     double rad = p.tilt_axis_angle * M_PI / 180.0;
-    double hor = ((inputY * cos(rad)) + (inputR * sin(rad))) * p.yaw_weight +
-                 ((inputR * cos(rad)) - (inputY * sin(rad))) * p.roll_weight;
+    double hor;
+    if (inputR == 0.0) {
+        hor = inputY * cos(rad) * p.yaw_weight;
+    } else {
+        hor = ((inputY * cos(rad)) + (inputR * sin(rad))) * p.yaw_weight +
+              ((inputR * cos(rad)) - (inputY * sin(rad))) * p.roll_weight;
+    }
     double sens = (p.real_world_sens * p.dots_per_360 / 360.0) * accel * slowdown;
 
     // Deceleration brake: detects rapid gyro deceleration and dampens it

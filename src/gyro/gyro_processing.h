@@ -49,6 +49,7 @@ struct GyroState {
     int decelHistoryCount = 0;
     float decelBrakeEngagement = 0.f;
     float decelBrakeOmegaRaw = 0.f;
+
 };
 
 // Manual test helper for fixed-angle turns.
