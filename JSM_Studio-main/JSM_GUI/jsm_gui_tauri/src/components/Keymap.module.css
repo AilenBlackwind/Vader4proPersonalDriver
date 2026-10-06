@@ -1,0 +1,1536 @@
+.keymapCardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+:global(.app-card).visualMappingShell {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.keymapTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.keymapTitleRowActionsOnly {
+  justify-content: flex-end;
+}
+
+.keymapTitleRow h2 {
+  margin: 0;
+}
+
+.keymapSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.keymapSectionHeader h3 {
+  margin: 0;
+}
+
+.keymapSectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.keymapSectionHeader > :global(.ghost-btn) {
+  flex: 0 0 auto;
+}
+
+.keymapSectionHeader p {
+  margin: 0.15rem 0 0;
+  color: var(--text-mid);
+  font-size: 0.8rem;
+}
+
+.keymapGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.mappingWorkbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 0.72fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.mappingVisualPanel,
+.mappingDetailPanel {
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  background: var(--bg-2);
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
+}
+
+.mappingVisualPanel {
+  padding: 0.8rem;
+  min-width: 0;
+}
+
+.mappingDetailPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0;
+  position: sticky;
+  top: calc(var(--top-bar-height) + 0.75rem);
+  overflow: hidden;
+}
+
+.mappingVisualHeader,
+.mappingDetailHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.mappingVisualHeader h3 {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.mappingVisualHeader p {
+  margin: 0.12rem 0 0;
+  color: var(--text-mid);
+  font-size: 0.78rem;
+}
+
+.mappingModeBadge {
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 6px;
+  padding: 0.2rem 0.45rem;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.mappingButtonGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.mappingButtonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-top: 1px solid var(--border-1);
+  padding-top: 0.55rem;
+}
+
+.mappingButtonGroupTitle {
+  color: var(--text-strong);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mappingButtonStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.mappingButtonChip {
+  border: 1px solid var(--border-1);
+  border-radius: 6px;
+  background: var(--bg-input);
+  color: var(--text-mid);
+  padding: 0.42rem 0.52rem;
+  cursor: pointer;
+  font-size: 0.76rem;
+  display: inline-flex;
+  min-width: 7.7rem;
+  flex-direction: column;
+  gap: 0.18rem;
+  text-align: left;
+}
+
+.mappingButtonChip:hover {
+  border-color: var(--border-strong);
+  color: var(--text-strong);
+}
+
+.mappingButtonChipBound {
+  border-color: color-mix(in srgb, var(--telemetry-green) 58%, var(--border-1));
+  color: var(--telemetry-green);
+}
+
+.mappingButtonChipActive {
+  border-color: var(--accent);
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-input));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.mappingButtonChipLabel {
+  color: var(--text-strong);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.mappingButtonChipMeta {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+}
+
+.mappingButtonChipBound .mappingButtonChipMeta {
+  color: color-mix(in srgb, var(--telemetry-green) 78%, var(--text-muted));
+}
+
+.mappingDetailHeader {
+  color: var(--text-mid);
+  font-size: 0.85rem;
+}
+
+.mappingDetailHeader div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.mappingDetailHeader strong {
+  color: var(--text-strong);
+  font-size: 1.05rem;
+}
+
+.mappingDetailHeader p {
+  margin: 0;
+  color: var(--text-mid);
+  line-height: 1.4;
+}
+
+.mappingDetailPanel .keymapRow {
+  gap: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.mappingDetailPanel .keymapRowCapturing {
+  box-shadow: none;
+}
+
+.mappingDetailPanel .keymapLabel {
+  display: none;
+}
+
+.mappingDetailPanel .commandList {
+  width: 100%;
+}
+
+.triggerModeInline {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border-1);
+  border-radius: 14px;
+  background: var(--bg-input);
+}
+
+.triggerModeInline label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-mid);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.stickSettingsInline {
+  display: flex;
+  flex-direction: column;
+}
+
+.keymapRow {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-input);
+  flex-wrap: wrap;
+}
+
+.keymapRowCapturing {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.keymapLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 180px;
+}
+
+.buttonName {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.buttonMeta {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+}
+
+.keymapBindingControls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.keymapSectionActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.25rem 0 1.2rem;
+  flex-wrap: wrap;
+}
+
+.keymapSectionActions :global(.primary-btn),
+.keymapSectionActions :global(.secondary-btn),
+.keymapSectionActions :global(.ghost-btn) {
+  min-width: 140px;
+}
+
+.bindingRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bindingRow + .bindingRow {
+  margin-top: 0;
+}
+
+.bindingRowHeader {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-mid);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rowModifierSelect {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.rowModifierSelect label {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+}
+
+.rowModifierSelect select {
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  box-sizing: border-box;
+}
+
+.bindingInput {
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.bindingInput:hover {
+  border-color: var(--border-strong);
+}
+
+.bindingInputRecording {
+  border-color: var(--accent);
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--accent) 13%, var(--bg-input));
+}
+
+.primaryBindingRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.primaryBindingRow .bindingInput {
+  flex: 1 1 16rem;
+  min-width: 0;
+  width: auto;
+}
+
+.rowSpecialInlineSelect {
+  flex: 0 1 12rem;
+  min-width: 7.5rem;
+  max-width: 12rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-mid);
+  background: transparent;
+}
+
+.rowSpecialInlineSelectActive {
+  color: var(--text-strong);
+  border-color: var(--border-strong);
+  background: var(--bg-input);
+}
+
+.addBindingRow {
+  padding-top: 0.2rem;
+  align-self: flex-end;
+  margin-left: auto;
+}
+
+.addBindingRow select {
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+}
+
+.rowModifierSelect + .primaryBindingRow {
+  margin-top: -0.25rem;
+}
+
+.primaryBindingRow .clearBindingBtn {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.manualStickShift :global(.binding-input),
+.manualStickShift .bindingInput {
+  pointer-events: none;
+}
+
+.manualStickShift .bindingRowHeader span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.commandList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.commandCard {
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.commandSummary {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.55rem;
+}
+
+.commandSummaryMain {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-strong);
+  text-align: left;
+  cursor: pointer;
+}
+
+.commandTriggerBadge,
+.commandConditionBadge,
+.commandRawBadge {
+  flex: 0 0 auto;
+  padding: 0.18rem 0.45rem;
+  border: 1px solid var(--border-1);
+  border-radius: 999px;
+  color: var(--text-mid);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.commandConditionBadge {
+  color: var(--text-muted);
+}
+
+.commandRawBadge {
+  color: var(--text-mid);
+  border-color: var(--border-strong);
+}
+
+.commandArrow {
+  color: var(--text-muted);
+}
+
+.commandOutputSummary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commandActions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.commandEditor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--border-1);
+  background: var(--bg-2);
+}
+
+.commandEditor label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-mid);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.commandOutputValue input {
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+}
+
+.commandCaptureBtn {
+  align-self: end;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: transparent;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
+.addCommandRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  align-self: stretch;
+}
+
+.addCommandLabel {
+  color: var(--text-mid);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.addCommandButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.addCommandButtons button {
+  padding: 0.45rem 0.7rem;
+}
+
+.addCommandAdvanced {
+  color: var(--text-mid);
+  font-size: 0.85rem;
+}
+
+.addCommandAdvanced summary {
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.quickComposer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.8rem;
+  border-top: 1px solid var(--border-1);
+  background: color-mix(in srgb, var(--bg-2) 86%, var(--bg-input));
+}
+
+.quickComposerGroup,
+.quickComposerField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.quickComposerLabel,
+.quickComposerField span {
+  color: var(--text-mid);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.segmentedControl,
+.outputKindChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.segmentButton,
+.outputKindChip {
+  border: 1px solid var(--border-1);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-input) 92%, transparent);
+  color: var(--text-mid);
+  padding: 0.48rem 0.72rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.segmentButtonActive,
+.outputKindChipActive {
+  border-color: var(--accent);
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-input));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.quickComposerCaptureRow {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr);
+  gap: 0.65rem;
+}
+
+.capturePad {
+  min-height: 5.8rem;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--accent) 14%, transparent), transparent 58%),
+    color-mix(in srgb, var(--bg-input) 86%, transparent);
+  color: var(--text-mid);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.capturePad strong {
+  color: var(--text-strong);
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+}
+
+.capturePad:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.quickComposerField input {
+  padding: 0.58rem 0.72rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+}
+
+.quickAdvanced {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1060px) {
+  .mappingWorkbench {
+    grid-template-columns: 1fr;
+  }
+
+  .mappingDetailPanel {
+    position: static;
+  }
+}
+
+.commandEmptyState {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding: 0.5rem 0.25rem;
+}
+
+.mappingHelpModal {
+  width: min(960px, 92vw);
+  max-height: 88vh;
+  overflow-x: hidden;
+}
+
+.mappingHelpIntro,
+.mappingHelpNote {
+  margin: 0.25rem 0 0;
+  color: var(--text-mid);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.mappingHelpBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 0.95rem;
+}
+
+.mappingHelpNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.mappingHelpNavPill {
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-mid);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.mappingHelpNavPill:hover,
+.mappingHelpNavPill:focus-visible {
+  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-input));
+  color: var(--text-strong);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.mappingHelpSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.95rem;
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-2) 94%, transparent), color-mix(in srgb, var(--bg-1-5) 98%, transparent));
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
+  scroll-margin-top: 0.75rem;
+}
+
+.mappingHelpSectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mappingHelpSectionHeader h4 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 1rem;
+}
+
+.mappingHelpSectionHeader p {
+  margin: 0;
+  color: var(--text-mid);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.mappingHelpHero {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.mappingHelpModelNote {
+  margin: 0;
+  color: var(--text-mid);
+  font-size: 0.89rem;
+  line-height: 1.55;
+}
+
+.mappingHelpModel {
+  display: flex;
+  align-items: stretch;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.mappingHelpStep {
+  flex: 1 1 11rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-input);
+}
+
+.mappingHelpStep span {
+  color: var(--text-mid);
+  font-size: 0.82rem;
+}
+
+.mappingHelpStep strong {
+  color: var(--text-strong);
+}
+
+.mappingHelpArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.mappingHelpOptionalStrip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.mappingHelpOptionalItem,
+.mappingHelpOverviewCard,
+.mappingHelpScenarioCard,
+.mappingHelpRuleBlock {
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background: var(--bg-input);
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
+}
+
+.mappingHelpOptionalItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.8rem;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border-1));
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-input));
+}
+
+.mappingHelpOptionalItem span {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mappingHelpOptionalItem strong {
+  color: var(--text-strong);
+  font-size: 0.92rem;
+}
+
+.mappingHelpOverviewGrid,
+.mappingHelpScenarioGrid,
+.mappingHelpRuleSplit,
+.mappingHelpAdvancedGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.mappingHelpOverviewCard {
+  padding: 0.8rem 0.85rem;
+}
+
+.mappingHelpOverviewCard h5,
+.mappingHelpScenarioCard h5,
+.mappingHelpRuleBlockHeader h5,
+.mappingHelpRuleGroup h6 {
+  margin: 0;
+  color: var(--text-strong);
+}
+
+.mappingHelpOverviewCard h5,
+.mappingHelpRuleBlockHeader h5 {
+  font-size: 0.95rem;
+}
+
+.mappingHelpOverviewCard p,
+.mappingHelpBlockText,
+.mappingHelpRuleBlockHeader p {
+  margin: 0;
+  color: var(--text-mid);
+  font-size: 0.88rem;
+  line-height: 1.52;
+}
+
+.mappingHelpOverviewCard p {
+  margin-top: 0.35rem;
+}
+
+.mappingHelpScenarioCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem 0.9rem;
+}
+
+.mappingHelpScenarioMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.mappingHelpScenarioMeta div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.mappingHelpScenarioMeta dt {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mappingHelpScenarioMeta dd {
+  margin: 0;
+  color: var(--text-mid);
+  font-size: 0.88rem;
+  line-height: 1.52;
+}
+
+.mappingHelpRuleStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.mappingHelpRuleBlock {
+  padding: 0.85rem 0.9rem;
+}
+
+.mappingHelpRuleBlockHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.mappingHelpRuleGroups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+}
+
+.mappingHelpRuleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.mappingHelpRuleGroup h6 {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mappingHelpRuleList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mappingHelpRuleRow {
+  display: grid;
+  grid-template-columns: 6.2rem 1fr;
+  gap: 0.7rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-1) 88%, transparent);
+}
+
+.mappingHelpRuleRow:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.mappingHelpRuleRow strong {
+  color: var(--text-strong);
+  font-size: 0.87rem;
+}
+
+.mappingHelpRuleRow span {
+  color: var(--text-mid);
+  font-size: 0.87rem;
+  line-height: 1.5;
+}
+
+.mappingHelpAdvancedPrimary {
+  grid-column: 1 / -1;
+}
+
+.mappingHelpTriggerRail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.mappingHelpTriggerState {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.8rem;
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg-2));
+}
+
+.mappingHelpTriggerState span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.mappingHelpTriggerState strong {
+  color: var(--text-strong);
+  font-size: 0.96rem;
+}
+
+.mappingHelpTriggerRailArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.mappingHelpFooterNotes {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.mappingHelpNote {
+  margin: 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px dashed var(--border-1);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-input) 92%, transparent);
+}
+
+@media (max-width: 860px) {
+  .mappingHelpOptionalStrip,
+  .mappingHelpOverviewGrid,
+  .mappingHelpScenarioGrid,
+  .mappingHelpRuleSplit,
+  .mappingHelpAdvancedGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mappingHelpRuleGroups {
+    grid-template-columns: 1fr;
+  }
+
+  .mappingHelpAdvancedPrimary {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .mappingHelpModel,
+  .mappingHelpTriggerRail {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mappingHelpArrow,
+  .mappingHelpTriggerRailArrow {
+    display: none;
+  }
+
+  .mappingHelpRuleRow {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+
+  .mappingHelpNavPill {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.paddleNote {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--text-muted);
+}
+
+.trackballInline {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.trackballInline label {
+  font-weight: 600;
+  color: var(--text-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.trackballInline input[type='number'] {
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+}
+
+.trackballInline input[type='range'] {
+  width: 100%;
+}
+
+.advancedEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-2);
+}
+
+.advancedEditorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.advancedEditorBadge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+}
+
+.advancedTokenList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.advancedTokenRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.7rem;
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background: var(--bg-input);
+}
+
+.advancedTokenToolbar,
+.advancedTokenValueRow,
+.advancedTokenActions,
+.advancedEditorFooter {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.advancedTokenToolbar select,
+.advancedTokenValueRow select,
+.advancedTokenValueRow input {
+  min-width: 0;
+  flex: 1 1 10rem;
+}
+
+.advancedTokenValueRow input {
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+}
+
+.advancedCaptureBtn,
+.advancedRemoveBtn {
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: transparent;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
+.advancedRemoveBtn {
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+  margin-left: auto;
+}
+
+.clearBindingBtn {
+  padding: 0.6rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.clearBindingBtn:hover:not(:disabled) {
+  border-color: var(--danger-border);
+}
+
+.globalControlsBlock {
+  border: 1px solid var(--border-1);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--accent) 7%, transparent), transparent 36%),
+    color-mix(in srgb, var(--bg-2) 88%, transparent);
+  padding: 1rem;
+  box-shadow: 0 18px 38px color-mix(in srgb, #000 22%, transparent), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.globalControlsBlockCompact {
+  margin-bottom: 1rem;
+}
+
+.globalControls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 0;
+}
+
+.globalControlRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+  min-height: 5.25rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-input);
+}
+
+.globalControlText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.globalControlTitle {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.globalControlCaption {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+}
+
+.globalControlInputGroup {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.globalControlInputGroup input[type='number'] {
+  width: 5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  font-size: 1rem;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.globalControlInputGroup input[type='number']:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+  outline: none;
+}
+
+.globalControlInputGroup select {
+  max-width: 100%;
+}
+
+.globalControlUnit {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+}
+
+.lightBarColorPicker {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.15rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  cursor: pointer;
+}
+
+.lightBarClearBtn {
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: transparent;
+  color: var(--text-mid);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.lightBarClearBtn:hover {
+  border-color: var(--danger-border);
+  color: var(--danger-text, var(--text-strong));
+}
+
+.adaptiveToggle {
+  margin-top: 0;
+  padding: 0.85rem 0.95rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.adaptiveToggle label {
+  font-weight: 600;
+  color: var(--text-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Tool-mode density overrides */
+.mappingDetailHeader {
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border-1);
+  background: var(--bg-1-5);
+  font-size: 0.78rem;
+}
+
+.mappingDetailHeader strong {
+  font-size: 0.95rem;
+}
+
+.mappingDetailPanel .keymapRow {
+  padding: 0.7rem 0.75rem;
+}
+
+.triggerModeInline,
+.keymapRow,
+.advancedEditor,
+.mappingHelpStep,
+.mappingHelpCard,
+.globalControlRow,
+.adaptiveToggle {
+  border-radius: 8px;
+}
+
+.triggerModeInline {
+  gap: 0.5rem;
+  padding: 0.65rem;
+}
+
+.triggerModeInline label,
+.rowModifierSelect label,
+.bindingRowHeader {
+  font-size: 0.78rem;
+}
+
+.keymapRow {
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.buttonName {
+  font-size: 0.95rem;
+}
+
+.buttonMeta {
+  font-size: 0.78rem;
+}
+
+.keymapBindingControls {
+  gap: 0.75rem;
+}
+
+.keymapSectionActions {
+  gap: 0.5rem;
+  margin: 0.15rem 0 0.8rem;
+}
+
+.keymapSectionActions :global(.primary-btn),
+.keymapSectionActions :global(.secondary-btn),
+.keymapSectionActions :global(.ghost-btn) {
+  min-width: 116px;
+}
+
+.mappingDetailActions {
+  align-items: flex-start;
+  margin: 0;
+  padding: 0 0.75rem 0.8rem;
+}
+
+.mappingDetailActions > :global(.primary-btn):first-child,
+.mappingDetailActions > :global(.secondary-btn):first-child {
+  box-sizing: border-box;
+  flex: 1 0 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.bindingRow {
+  gap: 0.45rem;
+}
+
+.rowModifierSelect select,
+.bindingInput,
+.addBindingRow select,
+.commandCaptureBtn,
+.segmentButton,
+.outputKindChip,
+.capturePad,
+.quickComposerField input,
+.advancedCaptureBtn,
+.advancedRemoveBtn,
+.clearBindingBtn,
+.lightBarClearBtn {
+  border-radius: 6px;
+}
+
+.rowModifierSelect select,
+.addBindingRow select,
+.rowSpecialInlineSelect {
+  padding: 0.38rem 0.55rem;
+}
+
+.bindingInput {
+  padding: 0.5rem 0.7rem;
+  font-size: 0.86rem;
+}
+
+.commandList {
+  gap: 0.45rem;
+}
+
+.commandSummary {
+  padding: 0.42rem;
+}
+
+.commandTriggerBadge,
+.commandConditionBadge,
+.commandRawBadge {
+  border-radius: 4px;
+  font-size: 0.72rem;
+}
+
+.commandEditor {
+  gap: 0.5rem;
+  padding: 0.6rem;
+}
+
+.quickComposer {
+  gap: 0.65rem;
+  padding: 0.65rem;
+}
+
+.segmentButton,
+.outputKindChip {
+  padding: 0.38rem 0.58rem;
+}
+
+.segmentButtonActive,
+.outputKindChipActive {
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.capturePad {
+  min-height: 4.8rem;
+  background: var(--bg-input);
+}
+
+.globalControlsBlock {
+  border-radius: 8px;
+  background: var(--bg-2);
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
+  padding: 0.75rem;
+}
+
+.globalControls {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.5rem;
+}
+
+.globalControlRow {
+  min-height: 4.25rem;
+  padding: 0.6rem 0.65rem;
+}

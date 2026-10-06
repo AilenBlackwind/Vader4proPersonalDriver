@@ -1,0 +1,1082 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.pageCard,
+.deviceCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pageCard {
+  gap: 0.38rem;
+}
+
+.pageCard h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.18;
+}
+
+.pageCard :global(.field-description) {
+  margin: 0;
+}
+
+.controlGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.cardMetric,
+.compactStateLine {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.cardMetric {
+  display: inline-flex;
+  align-items: center;
+}
+
+.cardMetricSuccess {
+  color: var(--toast-success-text);
+}
+
+.cardMetricWarn {
+  color: var(--toast-warning-text);
+}
+
+.compactStateLine {
+  margin-top: -0.1rem;
+}
+
+.introCard {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.65rem;
+  padding-block: 0.55rem;
+  background: color-mix(in srgb, var(--bg-2) 78%, var(--bg-input));
+}
+
+.introCard h2 {
+  flex: 0 0 auto;
+}
+
+.introCard :global(.field-description) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deviceCard {
+  container-type: inline-size;
+}
+
+.emptyState {
+  border: 1px dashed var(--border-strong);
+  border-radius: 14px;
+  background: var(--bg-1-5);
+  padding: 1rem 1.1rem;
+  color: var(--text-mid);
+}
+
+.emptyState strong {
+  display: block;
+  color: var(--text-strong);
+  margin-bottom: 0.35rem;
+}
+
+.emptyState p,
+.emptyInline {
+  margin: 0;
+}
+
+.deviceHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.deviceHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.deviceHeading h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-strong);
+}
+
+.deviceMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  font-size: 0.87rem;
+  color: var(--text-dim);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.statusNormal {
+  background: var(--toast-success-bg);
+  border: 1px solid var(--toast-success-border);
+  color: var(--toast-success-text);
+}
+
+.statusIgnored {
+  background: var(--toast-warn-bg);
+  border: 1px solid var(--toast-warn-border);
+  color: var(--toast-warn-text);
+}
+
+.statusLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.visualPanel {
+  min-height: 100%;
+}
+
+.visualPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.visualLayerTag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.detailPanels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.panel {
+  border: 1px solid var(--border-1);
+  border-radius: 14px;
+  background: var(--bg-1-5);
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.bindingPanel,
+.selectedPanel,
+.buttonsPanel,
+.boundButtonsPanel {
+  grid-column: 1 / -1;
+}
+
+.panelTitle {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.bindingPanelHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.layerTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.layerTab {
+  appearance: none;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-mid);
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.layerTab:hover {
+  border-color: var(--border-strong);
+  color: var(--text-strong);
+}
+
+.layerTabActive {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 13%, var(--bg-input));
+  color: var(--accent);
+}
+
+.bindingCategoryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  max-height: 31rem;
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
+.bindingCategory {
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-input);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bindingCategoryTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.bindingItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.bindingItem {
+  appearance: none;
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background: var(--bg-1);
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.bindingItem:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.bindingItemSelected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.bindingItemBound {
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-1));
+}
+
+.bindingItemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.bindingItemTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.bindingItemLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.bindingItemCategory {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.bindingItemCode {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.76rem;
+  color: var(--text-dim);
+}
+
+.bindingItemValue {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.bindingItemValueBound {
+  color: var(--text-strong);
+}
+
+.bindingItemValueEmpty {
+  color: var(--text-dim);
+}
+
+.boundButtonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.boundButtonCard {
+  appearance: none;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-input));
+  text-align: left;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.boundButtonCard:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.selectedHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.selectedTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.selectedButtonName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.selectedButtonCode {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-input);
+  color: var(--text-dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.74rem;
+  padding: 0.15rem 0.55rem;
+}
+
+.selectedDescription {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-dim);
+}
+
+.detailSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.detailSectionTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.detailList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.detailRow {
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background: var(--bg-input);
+  padding: 0.55rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.detailRowHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.detailLabel {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.detailMeta {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+}
+
+.detailValue {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86rem;
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+
+.buttonList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.buttonChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  font-size: 0.84rem;
+  line-height: 1;
+}
+
+.metricGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.metricRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.metricHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.metricLabel {
+  font-size: 0.83rem;
+  color: var(--text-dim);
+}
+
+.metricValue {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--text-strong);
+}
+
+.meterTrack {
+  position: relative;
+  overflow: hidden;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-1);
+}
+
+.meterCenterLine {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  left: 50%;
+  width: 1px;
+  background: var(--border-strong);
+  opacity: 0.85;
+  transform: translateX(-50%);
+}
+
+.meterFill {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  border-radius: 999px;
+}
+
+.meterFillPositive {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 48%, transparent), var(--accent));
+}
+
+.meterFillNegative {
+  background: linear-gradient(90deg, rgba(255, 123, 107, 0.95), rgba(255, 123, 107, 0.5));
+}
+
+.meterFillUnsigned {
+  left: 0;
+  background: linear-gradient(90deg, rgba(88, 184, 138, 0.55), rgba(88, 184, 138, 0.95));
+}
+
+.connectionCard {
+  border: 1px solid var(--border-1);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 7%, var(--bg-1)) 0%, var(--bg-1) 72%);
+}
+
+.connectionCardPriority {
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--border-1));
+  background:
+    radial-gradient(circle at 16% 12%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 38%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--bg-1)) 0%, var(--bg-1) 72%);
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
+}
+
+.connectionCardPriority .connectionHeading h2 {
+  font-size: 1.08rem;
+}
+
+.connectionCardPriority .connectionList {
+  grid-template-columns: 1fr;
+}
+
+.connectionCardPriority .connectionRow {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border-1));
+  padding: 0.85rem 0.9rem;
+}
+
+.connectionCardPriority .connectionRow:not(:disabled):hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-input));
+}
+
+.connectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.connectionHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.connectionHeading h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.18;
+}
+
+.connectionActions,
+.connectionSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.connectionActions {
+  justify-content: flex-end;
+}
+
+.connectionStateBox {
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  background: var(--bg-input);
+}
+
+.connectionStateBox p {
+  margin: 0.25rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.connectionStateTitle {
+  color: var(--text-strong);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.connectionStateConnected {
+  border-color: color-mix(in srgb, var(--toast-success-border) 54%, var(--border-1));
+  background: color-mix(in srgb, var(--toast-success-bg) 44%, var(--bg-input));
+}
+
+.connectionStateMissing {
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--border-1));
+  background:
+    radial-gradient(circle at 8% 10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 34%),
+    var(--bg-input);
+}
+
+.connectionList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+}
+
+.connectionRow {
+  appearance: none;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: flex-start;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-input);
+  color: inherit;
+  text-align: left;
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.connectionRow:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.connectionRow:disabled {
+  cursor: wait;
+  opacity: 0.78;
+}
+
+.connectionRow:disabled:hover {
+  transform: none;
+}
+
+.connectionRowSelected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-input));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.connectionRowConnected {
+  border-color: var(--toast-success-border);
+  background: color-mix(in srgb, var(--toast-success-bg) 58%, var(--bg-input));
+}
+
+.connectionRowConnected:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.connectionCheckmark {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-1);
+  margin-top: 0.1rem;
+}
+
+.connectionRowSelected .connectionCheckmark {
+  border-color: var(--accent);
+  background: radial-gradient(circle at center, var(--bg-1) 0 28%, transparent 30%), var(--accent);
+}
+
+.connectionRowConnected .connectionCheckmark {
+  border-color: var(--toast-success-border);
+  background: var(--toast-success-text);
+}
+
+.connectionDeviceMain {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.26rem;
+}
+
+.connectionDeviceMain strong {
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+
+.connectionDeviceTitle {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.connectionDeviceMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
+.hidHideCard {
+  border: 1px solid var(--border-1);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 4%, var(--bg-1)) 0%, var(--bg-1) 100%);
+}
+
+.hidHideHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.hidHideHeading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.hidHideHeading h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.18;
+}
+
+.hidHideActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.hidHideSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.hidHideChip,
+.hidHidePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.32rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.hidHideChipPositive,
+.hidHidePillPositive {
+  background: var(--toast-success-bg);
+  border-color: var(--toast-success-border);
+  color: var(--toast-success-text);
+}
+
+.hidHideChipMuted,
+.hidHidePillMuted {
+  background: var(--bg-input);
+  border-color: var(--border-strong);
+  color: var(--text-dim);
+}
+
+.hidHideChipWarn,
+.hidHidePillWarn {
+  background: var(--toast-warn-bg);
+  border-color: var(--toast-warn-border);
+  color: var(--toast-warn-text);
+}
+
+.hidHideNotice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-1);
+  padding: 0.9rem 1rem;
+}
+
+.hidHideNotice p {
+  margin: 0;
+}
+
+.hidHideNoticeTitle {
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.hidHideNoticeActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.hidHideNoticeMuted {
+  background: var(--bg-1-5);
+  color: var(--text-mid);
+}
+
+.hidHideNoticeWarn {
+  background: var(--toast-warn-bg);
+  border-color: var(--toast-warn-border);
+  color: var(--toast-warn-text);
+}
+
+.hidHideNoticeError {
+  background: var(--toast-error-bg);
+  border-color: var(--toast-error-border);
+  color: var(--toast-error-text);
+}
+
+.hidHideDeviceList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.hidHideDeviceRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-input) 88%, var(--accent) 12%);
+  padding: 0.75rem 0.85rem;
+}
+
+.hidHideDeviceMain {
+  min-width: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.32rem;
+}
+
+.hidHideDeviceTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.hidHideDeviceTitleRow strong {
+  min-width: 0;
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
+}
+
+.hidHideDeviceBadges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.3rem;
+}
+
+.hidHideDeviceMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.hidHideInstanceId {
+  display: block;
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.hidHideDeviceActions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+@container (max-width: 1120px) {
+  .statusLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .detailPanels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container (max-width: 840px) {
+  .bindingCategoryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .controlGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .deviceHeader {
+    flex-direction: column;
+  }
+
+  .introCard,
+  .connectionHeader,
+  .hidHideHeader,
+  .hidHideDeviceRow,
+  .hidHideDeviceTitleRow {
+    flex-direction: column;
+  }
+
+  .connectionActions,
+  .hidHideActions,
+  .hidHideDeviceBadges {
+    justify-content: flex-start;
+  }
+
+  .hidHideDeviceActions {
+    width: 100%;
+  }
+}
+
+/* Tool-mode density overrides */
+.page,
+.pageCard,
+.deviceCard {
+  gap: 0.6rem;
+}
+
+.emptyState,
+.panel,
+.bindingCategory,
+.bindingItem,
+.boundButtonCard {
+  border-radius: 8px;
+}
+
+.emptyState {
+  background: var(--bg-input);
+  padding: 0.75rem 0.85rem;
+}
+
+.deviceHeader,
+.statusLayout {
+  gap: 0.75rem;
+}
+
+.deviceHeading h3 {
+  font-size: 0.98rem;
+}
+
+.deviceMeta {
+  gap: 0.32rem 0.6rem;
+  font-size: 0.78rem;
+}
+
+.statusBadge,
+.visualLayerTag,
+.layerTab,
+.hidHideChip,
+.hidHidePill {
+  border-radius: 6px;
+}
+
+.statusBadge {
+  padding: 0.28rem 0.55rem;
+  font-size: 0.76rem;
+}
+
+.visualLayerTag {
+  padding: 0.24rem 0.55rem;
+  font-size: 0.74rem;
+}
+
+.detailPanels {
+  gap: 0.65rem;
+}
+
+.panel {
+  padding: 0.65rem 0.75rem;
+  gap: 0.55rem;
+}
+
+.hidHideNotice,
+.hidHideDeviceRow,
+.connectionRow,
+.connectionStateBox {
+  border-radius: 8px;
+}
+
+.hidHideNotice,
+.hidHideDeviceRow,
+.connectionRow,
+.connectionStateBox {
+  padding: 0.75rem 0.85rem;
+}
+
+.panelTitle {
+  font-size: 0.82rem;
+}
+
+.layerTabs {
+  gap: 0.35rem;
+}
+
+.layerTab {
+  padding: 0.3rem 0.58rem;
+  font-size: 0.74rem;
+}
+
+.bindingCategoryGrid {
+  gap: 0.6rem;
+}
+
+.bindingCategory {
+  padding: 0.6rem;
+}
+
+.bindingItem {
+  padding: 0.45rem 0.55rem;
+}
+
+.boundButtonCard {
+  padding: 0.6rem;
+}
+
+.meterTrack,
+.meterFill {
+  border-radius: 4px;
+}

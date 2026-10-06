@@ -1,0 +1,76 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: 208px 1fr;
+  height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.shell-main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-0);
+}
+
+.shell-scroll {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  min-height: 0;
+  background:
+    linear-gradient(90deg, var(--shell-scroll-grid-x) 1px, transparent 1px),
+    linear-gradient(180deg, var(--shell-scroll-grid-y) 1px, transparent 1px),
+    var(--bg-0);
+  background-size: 32px 32px, 32px 32px, auto;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  padding: 0.85rem 1rem 1.2rem;
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.main-pane > * + * {
+  margin-top: 1rem;
+}
+
+.main-pane {
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 1060px) {
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+    row-gap: 1.5rem;
+    padding-top: 1rem;
+  }
+
+  .main-pane {
+    width: 100%;
+  }
+
+  /* Single scrollbar: let body own scroll */
+  .shell-main {
+    height: auto;
+    overflow: visible;
+  }
+
+  .shell-scroll {
+    overflow: visible;
+    scrollbar-gutter: auto;
+  }
+}

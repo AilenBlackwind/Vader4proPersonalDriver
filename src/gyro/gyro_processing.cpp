@@ -37,8 +37,11 @@ void ApplyDirectGyroMode(double rawY,
     double rawMagYP = sqrt(rawY * rawY + rawP * rawP);
     if (p.smoothing_enabled && p.smoothing_threshold > 0.0) {
         double x = fmin(rawMagYP / p.smoothing_threshold, 1.0);
-        double g = (1.0 - x) * (1.0 - x);
-        double effT = p.smoothing_time * g;
+        // Strength < 1 routes a fraction of the signal around the filter;
+        // strength > 1 keeps full routing but stretches the filter time.
+        double strength = fmax(p.smoothing_strength, 0.0);
+        double g = fmin(strength, 1.0) * (1.0 - x) * (1.0 - x);
+        double effT = p.smoothing_time * g * fmax(1.0, strength);
         double alpha = (effT <= 1e-6) ? 1.0 : (1.0 - exp(-dt / effT));
         double tY = rawY * g, tP = rawP * g;
         s.smoothDY += alpha * (tY - s.smoothDY);
@@ -105,9 +108,6 @@ void EstimateBias(float& rY, float& rP, float& rR, double dt, GyroState& s, int 
     float g_diff;
     if (!s.bias_ready) {
         g_diff = sqrtf(rawY * rawY + rawP * rawP + rawR * rawR);
-        s.gyroBiasY = 0.f;
-        s.gyroBiasP = 0.f;
-        s.gyroBiasR = 0.f;
     } else {
         float dY = rawY - s.gyroBiasY;
         float dP = rawP - s.gyroBiasP;
@@ -140,10 +140,20 @@ void EstimateBias(float& rY, float& rP, float& rR, double dt, GyroState& s, int 
         double avgR = s.stillSumR / s.stillSamples;
 
         if (!s.bias_ready) {
-            s.gyroBiasY = (float)avgY;
-            s.gyroBiasP = (float)avgP;
-            s.gyroBiasR = (float)avgR;
-            s.bias_ready = true;
+            // Settle the initial bias gradually instead of freezing a single
+            // window snapshot: micro-motion present at power-on (controller
+            // switched on in hands) can no longer lock in as bias.
+            float blend = (float)(1.0 - exp(-dt * 3.0));
+            s.gyroBiasY += (float)((avgY - s.gyroBiasY) * blend);
+            s.gyroBiasP += (float)((avgP - s.gyroBiasP) * blend);
+            s.gyroBiasR += (float)((avgR - s.gyroBiasR) * blend);
+            // Switch to the tightened phase-2 tolerance only once the bias has
+            // converged to what the controller is actually doing at rest.
+            float eY = (float)avgY - s.gyroBiasY;
+            float eP = (float)avgP - s.gyroBiasP;
+            float eR = (float)avgR - s.gyroBiasR;
+            if (sqrtf(eY * eY + eP * eP + eR * eR) < 0.1f)
+                s.bias_ready = true;
         } else if (mode == 0) {
             double blend = 1.0 - exp(-dt * 1.5);
             s.gyroBiasY += (float)((avgY - s.gyroBiasY) * blend);
@@ -180,6 +190,7 @@ void ApplyGyroMovement(float rY,
         s.smoothDY = 0;
         s.smoothDP = 0;
         s.smooth_factor = 1.0;
+        s.trigRollSuppressTimer = 0.0f;
         s.decelHistoryCount = 0;
         s.decelHistoryHead = 0;
         s.decelBrakeEngagement = 0.f;
@@ -241,6 +252,31 @@ void ApplyGyroMovement(float rY,
     }
 
     if (!pureJoystick) {
+        // Trigger-coupled roll suppression: Tukey window (bath-shaped) on rawR
+        // BEFORE OneEuro filter.  5ms ramp-down → 15ms zero plateau → ramp-up
+        // to end.  The wide zero floor absorbs timing jitter in the mechanical
+        // jolt (which arrives 8–12ms after the trigger edge).
+        if (s.trigRollSuppressTimer > 0.0f) {
+            double total = s.trigRollSuppressTotal;
+            if (total > 0.0) {
+                double elapsed = total - s.trigRollSuppressTimer;
+                double roll_mult = 1.0;
+                if (elapsed < 0.005) {
+                    double t = elapsed / 0.005;
+                    roll_mult = 0.5 + 0.5 * cos(M_PI * t);
+                } else if (elapsed <= 0.020) {
+                    roll_mult = 0.0;
+                } else {
+                    double rampUp = total - 0.020;
+                    double t = fmin(fmax((elapsed - 0.020) / rampUp, 0.0), 1.0);
+                    roll_mult = 0.5 - 0.5 * cos(M_PI * t);
+                }
+                inputR *= roll_mult;
+            }
+            s.trigRollSuppressTimer -= (float)dt;
+            if (s.trigRollSuppressTimer < 0.0f) s.trigRollSuppressTimer = 0.0f;
+        }
+
         inputY = s.gyroFX.filter(inputY, s.absT);
         inputP = s.gyroFP.filter(inputP, s.absT);
         inputR = s.gyroFR.filter(inputR, s.absT);
@@ -279,13 +315,11 @@ void ApplyGyroMovement(float rY,
 
     if (p.invert_roll) inputR = -inputR;
     double rad = p.tilt_axis_angle * M_PI / 180.0;
-    double hor;
-    if (inputR == 0.0) {
-        hor = inputY * cos(rad) * p.yaw_weight;
-    } else {
-        hor = ((inputY * cos(rad)) + (inputR * sin(rad))) * p.yaw_weight +
-              ((inputR * cos(rad)) - (inputY * sin(rad))) * p.roll_weight;
-    }
+    // Tilt correction: pure rotation with yaw_weight
+    double tilt_hor = (inputY * cos(rad) + inputR * sin(rad)) * p.yaw_weight;
+    // Roll mixing: roll contributes directly to horizontal, independent of tilt
+    double roll_hor = inputR * p.roll_weight;
+    double hor = tilt_hor + roll_hor;
     double sens = (p.real_world_sens * p.dots_per_360 / 360.0) * accel * slowdown;
 
     // Deceleration brake: detects rapid gyro deceleration and dampens it
@@ -294,8 +328,7 @@ void ApplyGyroMovement(float rY,
     if (p.decel_brake_strength > 0.f && s.decelHistoryCount >= 10) {
         constexpr float kWindowSec = 0.010f;
         constexpr float kSpeedMin = 2.f;
-        constexpr float kSpeedMax = 60.f;
-        constexpr float kEngageTime = 0.010f;
+        constexpr float kEngageTime = 0.003f;
         constexpr float kReleaseTime = 0.006f;
         constexpr float kFullBrakeFactor = 3.5f;
 
@@ -318,7 +351,7 @@ void ApplyGyroMovement(float rY,
         float denom = (d1 > d0) ? (d1 - d0) : 1e-6f;
 
         float bInst = 0.f;
-        bool speedGate = (omega >= kSpeedMin && omega <= kSpeedMax);
+        bool speedGate = (omega >= kSpeedMin);
         if (speedGate) {
             bInst = fminf(1.f, fmaxf(0.f, (dNeg - d0) / denom));
         }
@@ -338,11 +371,55 @@ void ApplyGyroMovement(float rY,
     hor *= decelMul;
     inputP *= decelMul;
 
+    // Bounce-back: suppress small reversal after fast flick
+    if (p.bounce_back_strength > 0.f && p.bounce_back_threshold > 0.f) {
+        s.bouncePeakY = fmaxf(s.bouncePeakY * 0.9999f, fabs(hor));
+        s.bouncePeakP = fmaxf(s.bouncePeakP * 0.9999f, fabs(inputP));
+        if (s.bouncePeakY > p.bounce_back_peak_threshold) s.bounceArmedY = true;
+        if (s.bouncePeakP > p.bounce_back_peak_threshold) s.bounceArmedP = true;
+
+        if (s.bounceTimerY > 0.f) {
+            hor *= (1.f - p.bounce_back_strength);
+            s.bounceTimerY -= dt;
+        } else if (s.bounceDelayY > 0.f) {
+            s.bounceDelayY -= dt;
+            if (s.bounceDelayY <= 0.f) s.bounceTimerY = p.bounce_back_time;
+        } else if (s.bounceArmedY && fabs(hor) < p.bounce_back_threshold && s.prevHor * hor < 0 && hor != 0) {
+            s.bounceDelayY = p.bounce_back_delay;
+        }
+        if (s.bounceTimerP > 0.f) {
+            inputP *= (1.f - p.bounce_back_strength);
+            s.bounceTimerP -= dt;
+        } else if (s.bounceDelayP > 0.f) {
+            s.bounceDelayP -= dt;
+            if (s.bounceDelayP <= 0.f) s.bounceTimerP = p.bounce_back_time;
+        } else if (s.bounceArmedP && fabs(inputP) < p.bounce_back_threshold && s.prevInputP * inputP < 0 && inputP != 0) {
+            s.bounceDelayP = p.bounce_back_delay;
+        }
+
+        if (s.bounceTimerY <= 0.f && s.bounceDelayY <= 0.f && fabs(hor) < p.bounce_back_threshold * 0.5f) {
+            s.bounceArmedY = false;
+            s.bouncePeakY = 0.f;
+        }
+        if (s.bounceTimerP <= 0.f && s.bounceDelayP <= 0.f && fabs(inputP) < p.bounce_back_threshold * 0.5f) {
+            s.bounceArmedP = false;
+            s.bouncePeakP = 0.f;
+        }
+    }
+    s.prevHor = hor;
+    s.prevInputP = inputP;
+
     s.accX += (hor * dt) * sens;
     s.accY += (inputP * dt) * sens * p.vertical_scale;
 
     int mx = (int)std::round(s.accX);
     int my = (int)std::round(s.accY);
+
+    s.debugRawR = rawR;
+    s.debugEuroR = inputR;
+    s.debugHor = hor;
+    s.debugMx = mx;
+
     if (mx != 0 || my != 0) {
         INPUT in = {INPUT_MOUSE};
         in.mi.dx = mx;

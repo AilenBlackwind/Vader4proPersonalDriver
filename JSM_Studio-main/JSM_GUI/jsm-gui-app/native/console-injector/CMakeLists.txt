@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.20)
+project(jsm_console_injector LANGUAGES CXX)
+
+add_executable(jsm-console-injector src/ConsoleInjector.cpp)
+target_compile_features(jsm-console-injector PRIVATE cxx_std_17)
+if(MSVC)
+  target_compile_options(jsm-console-injector PRIVATE /W4 /EHsc /utf-8)
+else()
+  target_compile_options(jsm-console-injector PRIVATE -Wall -Wextra -pedantic)
+endif()

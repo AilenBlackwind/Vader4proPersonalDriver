@@ -1,0 +1,136 @@
+.stack-sm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.stack-md {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1.1;
+  border: 1px solid transparent;
+}
+
+.pill--warning {
+  background: var(--pill-warn-bg);
+  border-color: var(--pill-warn-border);
+  color: var(--pill-warn-text);
+}
+
+.pill--danger {
+  background: var(--pill-error-bg);
+  border-color: var(--pill-error-border);
+  color: var(--pill-error-text);
+}
+
+.pill--success {
+  background: var(--pill-success-bg);
+  border-color: var(--pill-success-border);
+  color: var(--pill-success-text);
+}
+
+.row-split {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.control-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.legacy-binding-warning {
+  margin: 0.3rem 0 0.8rem 0;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 196, 80, 0.4);
+  background: rgba(255, 196, 80, 0.08);
+  color: #ffc450;
+  font-size: 0.85rem;
+}
+
+.field-description {
+  margin: 0.05rem 0 0.18rem;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.calibration-pill {
+  display: inline-flex;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 182, 128, 0.6);
+  background: rgba(255, 182, 128, 0.12);
+  color: #ffb680;
+  font-weight: 600;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.link-btn {
+  border: none;
+  background: none;
+  color: color-mix(in srgb, var(--accent-primary) 68%, var(--text-mid));
+  cursor: pointer;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: underline;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.link-btn:hover {
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.full-width-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Inline status flags (e.g., calibration preset load) */
+.profile-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-btn);
+  color: var(--text-strong);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.profile-status.inline-flag {
+  border-color: rgba(255, 182, 128, 0.6);
+  background: rgba(255, 182, 128, 0.12);
+  color: #ffb680;
+}

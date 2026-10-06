@@ -1,4 +1,5 @@
 #include "app.h"
+#include "debug_tools.h"
 
 #include <windows.h>
 #include <cmath>
@@ -26,7 +27,10 @@ void RefreshModeState(SDL_hid_device* out, GyroState& state, GyroProfile& profil
     state.gyroFX.reset();
     state.gyroFP.reset();
     state.gyroFR.reset();
-    state.motion.Reset();
+    // Reset orientation/fusion state only — NOT the learned gyro calibration
+    // (GamepadMotion::Reset() would wipe GyroCalibration and all Settings on
+    // every mode toggle, undoing auto/manual calibration and config thresholds).
+    state.motion.ResetMotion();
     state.accX = 0;
     state.accY = 0;
     state.tiltY = 0;
@@ -36,6 +40,15 @@ void RefreshModeState(SDL_hid_device* out, GyroState& state, GyroProfile& profil
     state.smooth_factor = 1.0;
     state.trigger_slowdown_timer = 0;
     state.trigger_slowdown_prev_active = false;
+    state.trigRollSuppressTimer = 0.0f;
+    state.trigRollSuppressTotal = 0.0f;
+    state.trigRollPrevActive = false;
+    // mode2Rumble* NOT reset here — rumble logic's else branch handles cleanup naturally.
+    // Resetting mode2RumbleActive early would prevent the else branch from sending the stop command.
+    state.debugRawR = 0.0;
+    state.debugEuroR = 0.0;
+    state.debugHor = 0.0;
+    state.debugMx = 0;
     state.prevMode = mode;
 
     if (mode == 0) {
@@ -63,6 +76,8 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&prev);
 
+    TriggerDebugger dbg;
+
     GyroState state;
     Config conf;
     {
@@ -74,8 +89,9 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
         auto calMode = static_cast<GamepadMotionHelpers::CalibrationMode>(conf.calibration_mode);
         state.motion.SetCalibrationMode(calMode);
         state.motion.Settings.MinStillnessCorrectionTime = (float)conf.calibration_correction_time;
-        state.motion.Settings.StillnessGyroDelta = 1.2f;
-        state.motion.Settings.StillnessAccelDelta = 0.015f;
+        state.motion.Settings.StillnessGyroDelta = (float)conf.calibration_gyro_delta;
+        state.motion.Settings.StillnessAccelDelta = (float)conf.calibration_accel_delta;
+        state.biasCollectionTime = (float)conf.calibration_stillness_time;
     }
 
     bool disconnected = false;
@@ -111,8 +127,9 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
             auto calMode = static_cast<GamepadMotionHelpers::CalibrationMode>(conf.calibration_mode);
             state.motion.SetCalibrationMode(calMode);
             state.motion.Settings.MinStillnessCorrectionTime = (float)conf.calibration_correction_time;
-            state.motion.Settings.StillnessGyroDelta = 1.2f;
-            state.motion.Settings.StillnessAccelDelta = 0.015f;
+            state.motion.Settings.StillnessGyroDelta = (float)conf.calibration_gyro_delta;
+            state.motion.Settings.StillnessAccelDelta = (float)conf.calibration_accel_delta;
+            state.biasCollectionTime = (float)conf.calibration_stillness_time;
         }
 
         // Read sensor data from SDL3 gamepad API.
@@ -136,6 +153,12 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
         float aY = accel[1] / 9.80665f;
         float aZ = (accel[2] / 9.80665f) + conf.accel_z_offset;
 
+        // Analog trigger axes from SDL — react earlier than HID digital bytes.
+        int analogTrigR = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) * 255 / 32767;
+        int analogTrigL = SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER) * 255 / 32767;
+
+        dbg.push(state.absT, rY, rP, rR, aX, aY, aZ);
+
         // Mode switching uses the raw HID buffer (same logic as before).
         int mode = DetermineMode(buf, conf, state);
 
@@ -153,10 +176,11 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
         if (mode != state.prevMode) {
             RefreshModeState(hid_out, state, *p, mode, cur_r, cur_g, cur_b);
         }
-
         float slowdown = 1.0f;
         if (p->trigger_slowdown_enabled && mode != 0) {
-            int trig_val = buf[p->trigger_slowdown_byte];
+            int trig_val = (p->trigger_slowdown_byte == 23) ? analogTrigL :
+                           (p->trigger_slowdown_byte == 24) ? analogTrigR :
+                           buf[p->trigger_slowdown_byte];
             bool trigger_active = trig_val >= p->trigger_slowdown_threshold;
 
             if (p->trigger_slowdown_duration > 0.0f) {
@@ -174,6 +198,36 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
             }
             state.trigger_slowdown_prev_active = trigger_active;
         }
+
+        // Trigger rising-edge detection and coupled roll suppression.
+        // Both the slowdown and suppression now read the trigger state
+        // from SDL analog axes instead of raw HID bytes.
+        if (mode != 0) {
+            int trig_val = (p->trigger_slowdown_byte == 23) ? analogTrigL :
+                           (p->trigger_slowdown_byte == 24) ? analogTrigR :
+                           buf[p->trigger_slowdown_byte];
+            bool trig_active = trig_val >= p->trigger_slowdown_threshold;
+
+            // Analog-based early detection for roll suppression.
+            constexpr int kAnalogTrigThreshold = 16; // ~2048/32767 raw
+            bool analog_active = analogTrigR >= kAnalogTrigThreshold;
+            if (analog_active && !state.trigRollPrevActive) {
+                dbg.arm(state.absT, analogTrigR, trig_val);
+                if (p->trigger_roll_suppression_ms > 0.0f) {
+                    float t = p->trigger_roll_suppression_ms / 1000.0f;
+                    state.trigRollSuppressTimer = t;
+                    state.trigRollSuppressTotal = t;
+                    state.gyroFR.reset();
+                }
+            }
+            state.trigRollPrevActive = analog_active;
+        } else {
+            state.trigRollSuppressTimer = 0.0f;
+            state.trigRollSuppressTotal = 0.0f;
+            state.trigRollPrevActive = false;
+        }
+
+        dbg.tick(dt);
 
         if (conf.test_keys_enabled) {
             if (GetAsyncKeyState(conf.key_360) & 0x8000) {
@@ -214,6 +268,36 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
         }
 
         ApplyGyroMovement(0, 0, 0, dt, state, *p, mode, slowdown);
+        dbg.updateMouse((float)state.debugEuroR, (float)state.debugHor, (float)state.accX, state.debugMx);
+
+        // Mode 2 rumble: short weak left-trigger pulses while high-sensitivity mode is active.
+        // Disabled via conf.mode2_rumble_enabled (config hot-reload is respected).
+        // Cooldown prevents re-trigger when mode toggles rapidly at the trigger boundary.
+        state.mode2RumbleCooldown = fmax(0.0f, state.mode2RumbleCooldown - (float)dt);
+        if (mode == 2 && conf.mode2_rumble_enabled) {
+            state.mode2RumbleTimer -= (float)dt;
+            if (state.mode2RumbleTimer <= 0.0f && !state.mode2RumbleActive
+                && state.mode2RumbleCooldown <= 0.0f) {
+                SendRumble(hid_out, 0, 0, (uint8_t)conf.mode2_rumble_intensity, 0);
+                state.mode2RumbleActive = true;
+                state.mode2RumblePulseTimer = conf.mode2_rumble_duration;
+                state.mode2RumbleCooldown = 0.1f;
+            }
+            if (state.mode2RumbleActive) {
+                state.mode2RumblePulseTimer -= (float)dt;
+                if (state.mode2RumblePulseTimer <= 0.0f) {
+                    SendRumble(hid_out, 0, 0, 0, 0);
+                    state.mode2RumbleActive = false;
+                    state.mode2RumbleTimer = conf.mode2_rumble_interval;
+                }
+            }
+        } else {
+            if (state.mode2RumbleActive) {
+                SendRumble(hid_out, 0, 0, 0, 0);
+                state.mode2RumbleActive = false;
+            }
+            state.mode2RumbleTimer = 0.0f;
+        }
 
         // Prevent busy-wait: ~1 ms throttle.
         SDL_Delay(1);

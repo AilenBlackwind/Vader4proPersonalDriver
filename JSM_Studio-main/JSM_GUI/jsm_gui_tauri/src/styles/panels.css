@@ -1,0 +1,150 @@
+.recalibrate-card {
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  padding: 0.65rem;
+  background: var(--bg-2);
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.recalibrate-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.calibration-pill-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.85rem;
+  text-align: center;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.profile-summary-card {
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: var(--bg-2);
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.profile-summary-select {
+  margin-bottom: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: var(--text-mid);
+}
+
+.profile-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.profile-summary-title {
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.profile-summary-name {
+  font-weight: 600;
+  color: var(--text-mid);
+}
+
+.profile-summary-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.profile-modal .modal-header {
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--border-1);
+}
+
+.profile-modal .modal-header h3 {
+  margin: 0;
+}
+
+.profile-modal .profile-card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.app-card {
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  padding: 0.72rem 0.8rem;
+  background: var(--bg-2);
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
+  display: flex;
+  flex-direction: column;
+  gap: 0.58rem;
+}
+
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.78rem;
+}
+
+.control-panel h2 {
+  margin: 0;
+}
+
+.app-card h2,
+.control-panel h2 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 1.05rem;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+}
+
+.app-card h3,
+.control-panel h3 {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: 0.96rem;
+  line-height: 1.2;
+}
+
+.tab-placeholder {
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  padding: 0.9rem;
+  background: var(--bg-2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  margin-top: 0.75rem;
+}
+
+.tab-placeholder h2 {
+  margin: 0 0 0.35rem;
+}
+
+.tab-placeholder p {
+  margin: 0;
+  color: var(--text-muted);
+}
