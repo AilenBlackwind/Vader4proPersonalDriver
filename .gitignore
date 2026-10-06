@@ -15,3 +15,4 @@ __pycache__/
 # Junk artifacts
 cl
 python
+frame_dump.bin
