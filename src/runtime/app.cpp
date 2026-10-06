@@ -69,6 +69,7 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
 
     SendLED(hid_out, 0, 0, 0);
     runtime.device_connected = true;
+    runtime.haptic_running = true;
     std::thread haptic_thr(HapticThread, hid_out, std::ref(runtime.haptic_running),
                            std::ref(runtime.device_connected));
 
@@ -97,7 +98,7 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
 
     bool disconnected = false;
 
-    while (!disconnected) {
+    while (runtime.app_running && !disconnected) {
         // Poll SDL events for disconnect detection.
         SDL_Event e;
         while (SDL_PollEvent(&e)) {
@@ -105,12 +106,12 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
                 disconnected = true;
             }
         }
-        if (disconnected) break;
+        if (disconnected || !SDL_GamepadConnected(gamepad)) break;
 
         // Non-blocking read of raw HID for button/trigger state.
         // Stale buf is fine when no report arrives — DetermineMode and
         // trigger slowdown only need recent values on state transitions.
-        SDL_hid_read_timeout(hid_in, buf, sizeof(buf), 0);
+        if (SDL_hid_read_timeout(hid_in, buf, sizeof(buf), 0) < 0) break;
 
         QueryPerformanceCounter(&now);
         double dt = fmin(0.1, (double)(now.QuadPart - prev.QuadPart) / freq.QuadPart);
@@ -335,6 +336,31 @@ SDL_hid_device* OpenHidInput() {
     return SDL_hid_open_path(best_path.c_str());
 }
 
+SDL_Gamepad* OpenVaderGamepad() {
+    int count = 0;
+    SDL_JoystickID* ids = SDL_GetGamepads(&count);
+    SDL_Gamepad* gamepad = nullptr;
+    for (int i = 0; ids && i < count; ++i) {
+        // The raw HID protocol below is specific to this VID/PID. Never mix
+        // another controller's sensors with Vader's buttons and outputs.
+        if (SDL_GetGamepadVendorForID(ids[i]) != 0x04B4 ||
+            SDL_GetGamepadProductForID(ids[i]) != 0x2412) continue;
+        SDL_Gamepad* candidate = SDL_OpenGamepad(ids[i]);
+        if (!candidate) continue;
+        if (!SDL_GamepadHasSensor(candidate, SDL_SENSOR_GYRO) ||
+            !SDL_GamepadHasSensor(candidate, SDL_SENSOR_ACCEL) ||
+            !SDL_SetGamepadSensorEnabled(candidate, SDL_SENSOR_GYRO, true) ||
+            !SDL_SetGamepadSensorEnabled(candidate, SDL_SENSOR_ACCEL, true)) {
+            SDL_CloseGamepad(candidate);
+            continue;
+        }
+        gamepad = candidate;
+        break;
+    }
+    SDL_free(ids);
+    return gamepad;
+}
+
 }  // namespace
 
 int RunApp(AppRuntime& runtime) {
@@ -354,24 +380,17 @@ int RunApp(AppRuntime& runtime) {
     while (runtime.app_running) {
         SDL_Gamepad* gamepad = nullptr;
 
-        // Wait for the Vader 4 Pro to appear.
+        // Rescan attached devices so a failed open is retried even when no
+        // new GAMEPAD_ADDED event arrives.
         while (!gamepad && runtime.app_running) {
             SDL_Event e;
-            while (SDL_PollEvent(&e)) {
-                if (e.type == SDL_EVENT_GAMEPAD_ADDED) {
-                    gamepad = SDL_OpenGamepad(e.gdevice.which);
-                    break;
-                }
-            }
+            while (SDL_PollEvent(&e)) {}
+            gamepad = OpenVaderGamepad();
             if (!gamepad) SDL_Delay(100);
         }
         if (!gamepad) break;
 
         SDL_JoystickID gamepad_id = SDL_GetGamepadID(gamepad);
-
-        // Enable sensors on the gamepad.
-        SDL_SetGamepadSensorEnabled(gamepad, SDL_SENSOR_GYRO, true);
-        SDL_SetGamepadSensorEnabled(gamepad, SDL_SENSOR_ACCEL, true);
 
         // Open raw HID for button/trigger parsing and LED/rumble output.
         SDL_hid_device* hid_in = OpenHidInput();
@@ -381,6 +400,7 @@ int RunApp(AppRuntime& runtime) {
             SDL_CloseGamepad(gamepad);
             if (hid_in) SDL_hid_close(hid_in);
             if (hid_out) SDL_hid_close(hid_out);
+            SDL_Delay(100);
             continue;
         }
 

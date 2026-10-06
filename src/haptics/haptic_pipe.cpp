@@ -16,13 +16,12 @@ void HapticThread(SDL_hid_device* h,
                   std::atomic<bool>& device_connected) {
     // Bridges a small named-pipe protocol to controller rumble packets.
     const char* pipeName = "\\\\.\\pipe\\VaderHaptic";
-    haptic_running = true;
     printf("[HAPTIC] Pipe thread started\n");
 
     ULONGLONG rumble_end_time = 0;
     bool is_rumbling = false;
 
-    while (haptic_running) {
+    while (haptic_running && device_connected) {
         HANDLE hPipe = CreateNamedPipeA(pipeName, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
                                         PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
                                         PIPE_UNLIMITED_INSTANCES, 64, 64, 0, NULL);
@@ -34,7 +33,13 @@ void HapticThread(SDL_hid_device* h,
 
         OVERLAPPED ov = {0};
         ov.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+        if (!ov.hEvent) {
+            CloseHandle(hPipe);
+            Sleep(50);
+            continue;
+        }
         bool connected = false;
+        bool connect_pending = false;
 
         if (ConnectNamedPipe(hPipe, &ov)) {
             connected = true;
@@ -43,11 +48,16 @@ void HapticThread(SDL_hid_device* h,
             if (connectErr == ERROR_PIPE_CONNECTED) {
                 connected = true;
             } else if (connectErr == ERROR_IO_PENDING) {
+                connect_pending = true;
                 while (haptic_running && device_connected) {
-                    if (WaitForSingleObject(ov.hEvent, 500) == WAIT_OBJECT_0) {
-                        connected = true;
+                    DWORD result = WaitForSingleObject(ov.hEvent, 500);
+                    if (result == WAIT_OBJECT_0) {
+                        DWORD transferred = 0;
+                        connected = GetOverlappedResult(hPipe, &ov, &transferred, FALSE) != FALSE;
+                        connect_pending = false;
                         break;
                     }
+                    if (result == WAIT_FAILED) break;
                     if (is_rumbling && GetTickCount64() >= rumble_end_time) {
                         SendRumble(h, 0, 0);
                         is_rumbling = false;
@@ -62,16 +72,22 @@ void HapticThread(SDL_hid_device* h,
             }
         }
 
+        if (connect_pending) {
+            CancelIoEx(hPipe, &ov);
+            DWORD transferred = 0;
+            GetOverlappedResult(hPipe, &ov, &transferred, TRUE);
+        }
+        // The connection operation has completed/cancelled. Its event is no
+        // longer needed, including on the successful client path.
+        CloseHandle(ov.hEvent);
+
         if (!connected) {
-            CancelIo(hPipe);
-            CloseHandle(ov.hEvent);
             DisconnectNamedPipe(hPipe);
             CloseHandle(hPipe);
             continue;
         }
 
         if (!haptic_running || !device_connected) {
-            CloseHandle(ov.hEvent);
             DisconnectNamedPipe(hPipe);
             CloseHandle(hPipe);
             break;
@@ -80,6 +96,13 @@ void HapticThread(SDL_hid_device* h,
         unsigned char cmd[6];
         OVERLAPPED readOv = {0};
         readOv.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+        if (!readOv.hEvent) {
+            DisconnectNamedPipe(hPipe);
+            CloseHandle(hPipe);
+            Sleep(50);
+            continue;
+        }
+        bool read_pending = false;
 
         while (haptic_running && device_connected) {
             ResetEvent(readOv.hEvent);
@@ -89,6 +112,7 @@ void HapticThread(SDL_hid_device* h,
             if (!readOk) {
                 DWORD readErr = GetLastError();
                 if (readErr == ERROR_IO_PENDING) {
+                    read_pending = true;
                     while (haptic_running && device_connected) {
                         DWORD res = WaitForSingleObject(readOv.hEvent, 50);
                         if (is_rumbling && GetTickCount64() >= rumble_end_time) {
@@ -100,9 +124,12 @@ void HapticThread(SDL_hid_device* h,
                                 readErr = GetLastError();
                                 bytesRead = 0;
                             }
+                            read_pending = false;
                             break;
                         }
+                        if (res == WAIT_FAILED) break;
                     }
+                    if (read_pending) break;
                 }
                 if (readErr == ERROR_BROKEN_PIPE || readErr == ERROR_NO_DATA) break;
                 if (bytesRead == 0 && readErr != ERROR_IO_PENDING) break;
@@ -122,7 +149,11 @@ void HapticThread(SDL_hid_device* h,
             }
         }
 
-        CancelIo(hPipe);
+        if (read_pending) {
+            CancelIoEx(hPipe, &readOv);
+            DWORD transferred = 0;
+            GetOverlappedResult(hPipe, &readOv, &transferred, TRUE);
+        }
         CloseHandle(readOv.hEvent);
         DisconnectNamedPipe(hPipe);
         CloseHandle(hPipe);

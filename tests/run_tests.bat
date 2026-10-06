@@ -21,6 +21,14 @@ copy /y "%SDL3DIR%\lib\x64\SDL3.dll" . >nul
 if errorlevel 1 goto failed
 hid-path-tests.exe
 if errorlevel 1 goto failed
+cl /nologo /EHsc /std:c++17 /DNOMINMAX /I "%SDL3DIR%\include" "%REPO%\tests\app_runtime_tests.cpp" "%REPO%\src\haptics\haptic_pipe.cpp" "%REPO%\src\config\config.cpp" "%REPO%\src\gyro\gyro_processing.cpp" "%REPO%\src\gyro\joystick_mode.cpp" "%REPO%\src\gyro\profile_logic.cpp" /link "%SDL3DIR%\lib\x64\SDL3.lib" user32.lib /OUT:app-runtime-tests.exe
+if errorlevel 1 goto failed
+app-runtime-tests.exe
+if errorlevel 1 goto failed
+cl /nologo /EHsc /std:c++17 /DNOMINMAX /I "%SDL3DIR%\include" "%REPO%\tests\haptic_pipe_tests.cpp" /link "%SDL3DIR%\lib\x64\SDL3.lib" /OUT:haptic-pipe-tests.exe
+if errorlevel 1 goto failed
+haptic-pipe-tests.exe
+if errorlevel 1 goto failed
 popd
 exit /b 0
 :failed
