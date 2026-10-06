@@ -5,6 +5,7 @@
 #include <fstream>
 #include <psapi.h>
 #include <tlhelp32.h>
+#include <utility>
 
 #include "../../json.hpp"
 
@@ -53,6 +54,57 @@ FILETIME GetFileWriteTime(const std::string& path) {
         ft = data.ftLastWriteTime;
     }
     return ft;
+}
+
+// Publish a new master only after its structure and path types are checked.
+// A missing/bad file leaves the previous master (or the startup fallback) intact.
+bool LoadMasterConfig(json& master) {
+    std::ifstream f("master_config.json");
+    if (!f.is_open()) return false;
+    try {
+        json candidate = json::parse(f, nullptr, true, true);
+        if (!candidate.is_object()) return false;
+        if (candidate.contains("default") && !candidate["default"].is_string()) return false;
+        if (candidate.contains("apps")) {
+            if (!candidate["apps"].is_object()) return false;
+            for (const auto& path : candidate["apps"]) {
+                if (!path.is_string()) return false;
+            }
+        }
+        master = std::move(candidate);
+        return true;
+    } catch (const json::exception&) {
+        return false;
+    }
+}
+
+std::string ResolveConfigPath(const json& master, const std::string& exe) {
+    if (master.contains("apps") && master["apps"].contains(exe)) {
+        return master["apps"][exe].get<std::string>();
+    }
+    return master.value("default", "default.json");
+}
+
+bool ValidByteIndex(const json& object, const char* key) {
+    if (!object.contains(key)) return true;
+    const auto& index = object[key];
+    return index.is_number_integer() && index >= 0 && index < kHidReportSize;
+}
+
+bool ValidReportIndices(const json& j) {
+    if (!j.is_object() || !ValidByteIndex(j, "mode_trigger_byte") ||
+        !ValidByteIndex(j, "mode_button_byte")) return false;
+    for (const char* key : {"low_profile", "high_profile"}) {
+        if (j.contains(key) && (!j[key].is_object() ||
+            !ValidByteIndex(j[key], "trigger_slowdown_byte"))) return false;
+    }
+    if (j.contains("mode_alt_buttons")) {
+        if (!j["mode_alt_buttons"].is_array()) return false;
+        for (const auto& button : j["mode_alt_buttons"]) {
+            if (!button.is_object() || !ValidByteIndex(button, "byte")) return false;
+        }
+    }
+    return true;
 }
 
 void LoadProfile(const json& j, GyroProfile& p) {
@@ -122,28 +174,20 @@ void LoadProfile(const json& j, GyroProfile& p) {
 }  // namespace
 
 std::string ResolveActiveConfigPath() {
-    std::string exe = GetActiveProcessName();
-    std::ifstream f("master_config.json");
-    if (!f.is_open()) return "default.json";
-    try {
-        json master = json::parse(f, nullptr, true, true);
-        std::string default_path = master.value("default", "default.json");
-        if (master.contains("apps") && master["apps"].contains(exe)) {
-            return master["apps"][exe].get<std::string>();
-        }
-        return default_path;
-    } catch (...) {
-        return "default.json";
-    }
+    json master = json::object();
+    LoadMasterConfig(master);
+    return ResolveConfigPath(master, GetActiveProcessName());
 }
 
-bool LoadConfig(const std::string& path, Config& c) {
+bool LoadConfig(const std::string& path, Config& current) {
     // Configs are loaded wholesale so callers can swap them in atomically.
     std::ifstream f(path);
     if (!f.is_open()) return false;
 
     try {
         json j = json::parse(f, nullptr, true, true);
+        if (!ValidReportIndices(j)) return false;
+        Config c = current;
         c.accel_z_offset = j.value("accel_z_offset", c.accel_z_offset);
         c.trigger_threshold_low = j.value("trigger_threshold_low", c.trigger_threshold_low);
         c.trigger_threshold_high = j.value("trigger_threshold_high", c.trigger_threshold_high);
@@ -178,6 +222,7 @@ bool LoadConfig(const std::string& path, Config& c) {
         }
         if (j.contains("low_profile")) LoadProfile(j["low_profile"], c.low_profile);
         if (j.contains("high_profile")) LoadProfile(j["high_profile"], c.high_profile);
+        current = std::move(c);
         return true;
     } catch (...) {
         return false;
@@ -193,7 +238,7 @@ void ConfigWatcherThread(std::mutex& config_mutex,
     std::string lastFile;
     FILETIME lastWT = {0};
     FILETIME lastMWT = {0};
-    json master;
+    json master = json::object();
     bool first_run = true;
 
     while (app_running) {
@@ -202,22 +247,10 @@ void ConfigWatcherThread(std::mutex& config_mutex,
 
         FILETIME cmFT = GetFileWriteTime("master_config.json");
         if (CompareFileTime(&cmFT, &lastMWT) != 0) {
-            std::ifstream f("master_config.json");
-            if (f.is_open()) {
-                try {
-                    master = json::parse(f, nullptr, true, true);
-                    lastMWT = cmFT;
-                } catch (...) {
-                }
-            }
+            if (LoadMasterConfig(master)) lastMWT = cmFT;
         }
 
-        std::string exe = GetActiveProcessName();
-        std::string default_path = master.value("default", "default.json");
-        std::string target =
-            (master.contains("apps") && master["apps"].contains(exe))
-                ? master["apps"][exe].get<std::string>()
-                : default_path;
+        std::string target = ResolveConfigPath(master, GetActiveProcessName());
 
         FILETIME cFT = GetFileWriteTime(target);
         bool file_changed = CompareFileTime(&cFT, &lastWT) != 0;

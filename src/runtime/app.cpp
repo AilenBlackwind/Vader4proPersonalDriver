@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <cmath>
 #include <cstdio>
+#include <string>
 #include <thread>
 
 #include <SDL3/SDL.h>
@@ -71,7 +72,7 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
     std::thread haptic_thr(HapticThread, hid_out, std::ref(runtime.haptic_running),
                            std::ref(runtime.device_connected));
 
-    unsigned char buf[64] = {0};
+    unsigned char buf[kHidReportSize] = {0};
     LARGE_INTEGER freq, prev, now;
     QueryPerformanceFrequency(&freq);
     QueryPerformanceCounter(&prev);
@@ -109,7 +110,7 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
         // Non-blocking read of raw HID for button/trigger state.
         // Stale buf is fine when no report arrives — DetermineMode and
         // trigger slowdown only need recent values on state transitions.
-        SDL_hid_read_timeout(hid_in, buf, 64, 0);
+        SDL_hid_read_timeout(hid_in, buf, sizeof(buf), 0);
 
         QueryPerformanceCounter(&now);
         double dt = fmin(0.1, (double)(now.QuadPart - prev.QuadPart) / freq.QuadPart);
@@ -314,14 +315,14 @@ SDL_hid_device* OpenHidInput() {
     struct SDL_hid_device_info* devs = SDL_hid_enumerate(0x04B4, 0x2412);
     if (!devs) return nullptr;
 
-    const char* best_path = nullptr;
+    std::string best_path;
     int best_bytes = -1;
     for (auto cur = devs; cur; cur = cur->next) {
         SDL_hid_device* test = SDL_hid_open_path(cur->path);
         if (!test) continue;
         SDL_hid_set_nonblocking(test, 1);
-        unsigned char tmp[64];
-        int res = SDL_hid_read_timeout(test, tmp, 64, 10);
+        unsigned char tmp[kHidReportSize];
+        int res = SDL_hid_read_timeout(test, tmp, sizeof(tmp), 10);
         if (res > best_bytes) {
             best_bytes = res;
             best_path = cur->path;
@@ -330,8 +331,8 @@ SDL_hid_device* OpenHidInput() {
     }
     SDL_hid_free_enumeration(devs);
 
-    if (!best_path) return nullptr;
-    return SDL_hid_open_path(best_path);
+    if (best_path.empty()) return nullptr;
+    return SDL_hid_open_path(best_path.c_str());
 }
 
 }  // namespace

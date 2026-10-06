@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+inline constexpr int kHidReportSize = 64;
+
 // Alternate button mapping used when mode selection is not driven by the trigger.
 struct AltButton {
     int byte_index = 0;
@@ -112,7 +114,7 @@ struct Config {
 // Resolves the active config path from master_config.json and foreground window.
 std::string ResolveActiveConfigPath();
 
-// Loads one JSON config file into a full Config object.
+// Loads one JSON config file; leaves c unchanged on failure.
 bool LoadConfig(const std::string& path, Config& c);
 
 // Background poller that reloads master/default/app-specific configs on change.
