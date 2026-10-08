@@ -16,8 +16,7 @@ void ApplyDirectGyroMode(double rawY,
                          const GyroProfile& p,
                          double& inputY,
                          double& inputP,
-                         double& inputR,
-                         double& accel) {
+                         double& inputR) {
     if (fabs(rawY) < p.gyro_deadzone) rawY = 0;
     if (fabs(rawP) < p.gyro_deadzone) rawP = 0;
 
@@ -71,11 +70,6 @@ void ApplyDirectGyroMode(double rawY,
                 s.lostP -= rP;
             }
         }
-    }
-
-double fMag = sqrt(inputY * inputY + inputP * inputP + inputR * inputR);
-    if (p.accel_rate > 0 && fMag > p.accel_threshold) {
-        accel = fmin(p.accel_limit, 1.0 + (fMag - p.accel_threshold) * p.accel_rate);
     }
 }
 
@@ -191,6 +185,8 @@ void ApplyGyroMovement(float rY,
         s.smoothDP = 0;
         s.smooth_factor = 1.0;
         s.trigRollSuppressTimer = 0.0f;
+        s.debugAccelSpeed = 0.0;
+        s.debugAccel = 1.0;
         s.decelHistoryCount = 0;
         s.decelHistoryHead = 0;
         s.decelBrakeEngagement = 0.f;
@@ -229,7 +225,7 @@ void ApplyGyroMovement(float rY,
     if (pureJoystick) {
         ApplyJoystickMode(rawY, rawP, rawR, dt, s, p, inputY, inputP, true);
     } else {
-        ApplyDirectGyroMode(rawY, rawP, rawR, dt, s, p, inputY, inputP, inputR, accel);
+        ApplyDirectGyroMode(rawY, rawP, rawR, dt, s, p, inputY, inputP, inputR);
 
         if (p.joystick_mode && p.joy_overlay_enabled) {
             double stickY = 0.0;
@@ -320,6 +316,16 @@ void ApplyGyroMovement(float rY,
     // Roll mixing: roll contributes directly to horizontal, independent of tilt
     double roll_hor = inputR * p.roll_weight;
     double hor = tilt_hor + roll_hor;
+    // Use the motion that actually contributes to the mouse, after suppression,
+    // per-axis filtering and axis mixing. Unused/cancelled roll must not boost
+    // the other axes. Stay in mapped degrees/second, before base sensitivity,
+    // temporary slowdown and the downstream stopping/bounce-back effects.
+    double accelSpeed = hypot(hor, inputP * p.vertical_scale);
+    if (!pureJoystick && p.accel_rate > 0 && accelSpeed > p.accel_threshold) {
+        accel = fmin(p.accel_limit, 1.0 + (accelSpeed - p.accel_threshold) * p.accel_rate);
+    }
+    s.debugAccelSpeed = accelSpeed;
+    s.debugAccel = accel;
     double sens = (p.real_world_sens * p.dots_per_360 / 360.0) * accel * slowdown;
 
     // Deceleration brake: detects rapid gyro deceleration and dampens it

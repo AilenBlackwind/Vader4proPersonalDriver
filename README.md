@@ -29,6 +29,8 @@ build.bat
 ```
 
 The output is `main.exe`.
+To keep a running build intact, use `build.bat main-roll-filtered.exe`.
+Exit the previous driver before starting the experimental executable from this folder.
 
 ## Usage
 
@@ -42,6 +44,28 @@ The output is `main.exe`.
 - `default.json` — base config applied to all applications
 - `master_config.json` — maps executable names to per-app config files in `configs/`
 - Configs support comments (`//`) for documentation
+
+### Filtered acceleration experiment
+
+Mouse acceleration now uses the combined horizontal and vertical motion after
+trigger-roll suppression, per-axis One Euro filters, angle snapping and axis
+mixing. Roll with no mapped contribution cannot accelerate the other axes.
+The threshold is in mapped degrees/second: yaw/roll weights, tilt mixing and
+`vertical_scale` affect it; base sensitivity, dots per turn and temporary
+slowdown do not. Opposing yaw/roll contributions cancel before this measurement.
+Stopping and bounce-back effects remain downstream of acceleration.
+
+The multiplier stays at 1 through `accel_threshold`, then grows by
+`accel_rate` per degree/second above it, capped at `accel_limit`. Pure joystick
+mode still bypasses mouse acceleration; joystick overlay mode uses the combined,
+filtered mouse motion including the overlay. Existing profile values are kept,
+but thresholds may need retuning because they previously used unweighted motion
+before One Euro filtering. Roll's existing independent filter settings are unchanged.
+
+For a controller check, compare holding aim, slow tracking, trigger presses and
+wide roll turns followed by a stop with the same profile. Try acceleration off
+and on, and check combined yaw/roll turns for delay. Automated pipeline checks
+run via `tests\run_tests.bat` and intercept mouse output.
 
 ## Dependencies
 

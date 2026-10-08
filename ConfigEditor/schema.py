@@ -778,7 +778,7 @@ def profile_fields(section: str, prefix: tuple[str, ...]) -> list[FieldDef]:
             max_value=500.0,
             step=0.5,
             decimals=2,
-            help_text="Скорость мыши, после которой начинает работать ускорение. Ниже = ускорение включается раньше.",
+            help_text="Порог в °/с после фильтрации и смешивания осей, с учётом их весов и масштаба вертикали. Базовая чувствительность не влияет на порог. Ниже = ускорение включается раньше.",
             visible_if=group_predicates(lambda data: not joystick_enabled(data), accel_enabled),
         ),
         field(

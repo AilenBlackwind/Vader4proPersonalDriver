@@ -49,6 +49,8 @@ struct GyroState {
     double debugRawR = 0.0;
     double debugEuroR = 0.0;
     double debugHor = 0.0;
+    double debugAccelSpeed = 0.0; // filtered, mapped angular speed before acceleration
+    double debugAccel = 1.0;
     int debugMx = 0;
 
     // Deceleration brake state
