@@ -38,6 +38,7 @@ void RefreshModeState(SDL_hid_device* out, GyroState& state, GyroProfile& profil
     state.tiltP = 0;
     state.lostY = 0;
     state.lostP = 0;
+    state.lostR = 0;
     state.smooth_factor = 1.0;
     state.trigger_slowdown_timer = 0;
     state.trigger_slowdown_prev_active = false;

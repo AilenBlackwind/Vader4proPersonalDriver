@@ -8,6 +8,31 @@
 
 namespace {
 
+// Debt is an angle (degrees), output is angular speed (degrees/second).
+// Only retain a short history: recovery is not a promise to replay every
+// suppressed movement after the user's intent has changed.
+double RecoverPrecision(double raw, double shaped, double threshold, double dt,
+                        bool enabled, double rate, double& debt) {
+    if (!enabled || !(rate > 0) || !std::isfinite(rate) || !(dt > 0) ||
+        !(threshold > 0) || raw == 0) {
+        debt = 0;
+        return shaped;
+    }
+    if (debt * raw < 0) debt = 0;
+    const double direction = raw > 0 ? 1.0 : -1.0;
+    const double missing = fmax(0.0, fabs(raw) - fabs(shaped));
+    const double old = fabs(debt);
+    const double fraction = -expm1(-rate * dt);
+    // Exact integration for constant input over this sample, including losses
+    // generated during the sample. This also recovers during slow tracking.
+    double returned = old * fraction + missing * fmax(0.0, dt - fraction / rate);
+    // Never add more than the current shaped motion: tiny movements must not
+    // release a large old debt. Cap stored loss at 100 ms of threshold motion.
+    returned = fmin(returned, fabs(shaped) * dt);
+    debt = direction * fmin(threshold * 0.1, fmax(0.0, old + missing * dt - returned));
+    return shaped + direction * returned / dt;
+}
+
 void ApplyDirectGyroMode(double rawY,
                          double rawP,
                          double rawR,
@@ -32,9 +57,14 @@ void ApplyDirectGyroMode(double rawY,
     } else {
         inputR = rawR;
     }
+    inputR = RecoverPrecision(absR <= p.roll_deadzone ? 0.0 : rawR, inputR,
+                              rollPrecisionThreshold > p.roll_deadzone ? rollPrecisionThreshold : 0.0,
+                              dt, p.recovery_enabled && s.trigRollSuppressTimer <= 0,
+                              p.recovery_rate, s.lostR);
 
     double rawMagYP = sqrt(rawY * rawY + rawP * rawP);
     if (p.smoothing_enabled && p.smoothing_threshold > 0.0) {
+        s.lostY = s.lostP = 0;
         double x = fmin(rawMagYP / p.smoothing_threshold, 1.0);
         // Strength < 1 routes a fraction of the signal around the filter;
         // strength > 1 keeps full routing but stretches the filter time.
@@ -55,21 +85,10 @@ void ApplyDirectGyroMode(double rawY,
         inputY = rawY * f;
         inputP = rawP * f;
 
-        if (p.recovery_enabled && rawMagYP > 0.0) {
-            double rr = p.precision_power * 0.5;
-            if (f < 1.0) {
-                s.lostY += (rawY - inputY) * dt * rr;
-                s.lostP += (rawP - inputP) * dt * rr;
-            } else {
-                double decay = 1.0 - exp(-dt * rr);
-                double rY = fmin(fabs(s.lostY), fabs(inputY) * decay) * (s.lostY > 0 ? 1 : -1);
-                double rP = fmin(fabs(s.lostP), fabs(inputP) * decay) * (s.lostP > 0 ? 1 : -1);
-                inputY += rY;
-                inputP += rP;
-                s.lostY -= rY;
-                s.lostP -= rP;
-            }
-        }
+        inputY = RecoverPrecision(rawY, inputY, p.precision_threshold, dt,
+                                  p.recovery_enabled, p.recovery_rate, s.lostY);
+        inputP = RecoverPrecision(rawP, inputP, p.precision_threshold, dt,
+                                  p.recovery_enabled, p.recovery_rate, s.lostP);
     }
 }
 
@@ -181,6 +200,7 @@ void ApplyGyroMovement(float rY,
         s.tiltP = 0;
         s.lostY = 0;
         s.lostP = 0;
+        s.lostR = 0;
         s.smoothDY = 0;
         s.smoothDP = 0;
         s.smooth_factor = 1.0;
@@ -223,6 +243,7 @@ void ApplyGyroMovement(float rY,
     bool joystickActive = p.joystick_mode;
 
     if (pureJoystick) {
+        s.lostY = s.lostP = s.lostR = 0;
         ApplyJoystickMode(rawY, rawP, rawR, dt, s, p, inputY, inputP, true);
     } else {
         ApplyDirectGyroMode(rawY, rawP, rawR, dt, s, p, inputY, inputP, inputR);

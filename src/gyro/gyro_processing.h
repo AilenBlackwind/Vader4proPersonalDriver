@@ -22,6 +22,7 @@ struct GyroState {
     bool cal_key_down = false;
     double lostY = 0;
     double lostP = 0;
+    double lostR = 0; // recovery debts are signed angles in degrees
     double smoothDY = 0;
     double smoothDP = 0;
     double smooth_factor = 1.0;

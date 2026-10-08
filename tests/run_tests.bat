@@ -11,6 +11,10 @@ mkdir "%TESTDIR%"
 if errorlevel 1 exit /b 1
 pushd "%TESTDIR%"
 set "SDL3DIR=%REPO%\SDL3-devel\SDL3-3.4.12"
+cl /nologo /EHsc /std:c++17 /DNOMINMAX "%REPO%\tests\gyro_recovery_tests.cpp" "%REPO%\src\gyro\joystick_mode.cpp" /link user32.lib /OUT:gyro-recovery-tests.exe
+if errorlevel 1 goto failed
+gyro-recovery-tests.exe
+if errorlevel 1 goto failed
 cl /nologo /EHsc /std:c++17 /DNOMINMAX "%REPO%\tests\gyro_acceleration_tests.cpp" "%REPO%\src\gyro\joystick_mode.cpp" /link user32.lib /OUT:gyro-acceleration-tests.exe
 if errorlevel 1 goto failed
 gyro-acceleration-tests.exe

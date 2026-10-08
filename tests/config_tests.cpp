@@ -116,6 +116,14 @@ void TestWatcherRecovery() {
 int main() {
     try {
         TestIndices();
+        Write("test.json", R"({"low_profile":{"recovery_rate":0.1},"high_profile":{"recovery_rate":4.0}})");
+        Config recoveryConfig;
+        Check(LoadConfig("test.json", recoveryConfig) &&
+              recoveryConfig.low_profile.recovery_rate == 0.1 &&
+              recoveryConfig.high_profile.recovery_rate == 4.0, "Recovery rate was not loaded");
+        Write("test.json", R"({"low_profile":{"recovery_rate":-1}})");
+        Check(!LoadConfig("test.json", recoveryConfig) &&
+              recoveryConfig.low_profile.recovery_rate == 0.1, "Invalid recovery rate was applied");
         const char* masters[] = {nullptr, "{", "null", "[]", "{\"default\":123}",
                                 "{\"apps\":[]}", "{\"apps\":{\"test.exe\":123}}"};
         for (const char* master : masters) {

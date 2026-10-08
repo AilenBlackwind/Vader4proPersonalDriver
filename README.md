@@ -67,6 +67,28 @@ wide roll turns followed by a stop with the same profile. Try acceleration off
 and on, and check combined yaw/roll turns for delay. Automated pipeline checks
 run via `tests\run_tests.bat` and intercept mouse output.
 
+### Precision recovery
+
+Recovery now returns suppressed angular displacement during continued motion,
+including below the precision threshold, independently for yaw, pitch and roll.
+`recovery_rate` is read from profiles and exposed in the editor (inverse seconds;
+default 2, zero disables recovery). Existing values such as 0.1 now take effect:
+0.1 is a slow, approximately 10-second exponential time constant before limits.
+
+Each axis stores at most 0.1 seconds of motion at its precision threshold.
+Returned speed cannot exceed the current shaped speed, so the total at this
+stage is at most twice the shaped input. Excess history is discarded; this is
+bounded recovery, not guaranteed replay of every suppressed degree. A stopped
+or reversed axis drops old debt. Deadzone motion is never recovered. Recovery
+does not undo downstream filters, acceleration or pixel rounding.
+
+Yaw/pitch smoothing clears their precision debt; roll recovery remains available
+because roll retains its separate precision curve. Trigger-roll suppression
+clears and suspends roll recovery to prevent delayed replay of button jolts.
+Turning gyro off, changing profile/mode or entering pure joystick mode clears
+the corresponding histories. This is an experimental policy, not a verified
+replica of Steam Input.
+
 ## Dependencies
 
 - [hidapi](https://github.com/libusb/hidapi) — USB HID communication

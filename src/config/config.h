@@ -50,6 +50,7 @@ struct GyroProfile {
     double smooth_max_strength = 0.3;
     double smooth_lerp_speed = 5.0;
     bool recovery_enabled = true;
+    double recovery_rate = 2.0; // inverse seconds; zero disables recovery
     bool smoothing_enabled = false;
     double smoothing_time = 0.05;
     double smoothing_threshold = 10.0;

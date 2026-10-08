@@ -3,6 +3,8 @@
 #include <windows.h>
 
 #include <fstream>
+#include <cmath>
+#include <stdexcept>
 #include <psapi.h>
 #include <tlhelp32.h>
 #include <utility>
@@ -142,6 +144,9 @@ void LoadProfile(const json& j, GyroProfile& p) {
     p.smooth_max_strength = j.value("smooth_max_strength", p.smooth_max_strength);
     p.smooth_lerp_speed = j.value("smooth_lerp_speed", p.smooth_lerp_speed);
     p.recovery_enabled = j.value("recovery_enabled", p.recovery_enabled);
+    p.recovery_rate = j.value("recovery_rate", p.recovery_rate);
+    if (!std::isfinite(p.recovery_rate) || p.recovery_rate < 0.0)
+        throw std::runtime_error("recovery_rate must be finite and nonnegative");
     p.smoothing_enabled = j.value("smoothing_enabled", p.smoothing_enabled);
     p.smoothing_time = j.value("smoothing_time", p.smoothing_time);
     p.smoothing_threshold = j.value("smoothing_threshold", p.smoothing_threshold);

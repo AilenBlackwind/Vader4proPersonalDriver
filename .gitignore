@@ -1,6 +1,7 @@
 # Build outputs
 main.exe
 main-roll-filtered.exe
+main-recovery.exe
 *.obj
 *.exp
 vc140.pdb
