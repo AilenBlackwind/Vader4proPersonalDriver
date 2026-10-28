@@ -112,5 +112,5 @@
     "trigger_slowdown_threshold": 68
   },
   "accel_still_threshold": 7.0,
-  "accel_z_offset": 0.0
+  "accel_z_offset": 0
 }

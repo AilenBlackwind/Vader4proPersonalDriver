@@ -2,6 +2,12 @@
 main.exe
 main-roll-filtered.exe
 main-recovery.exe
+main-calibration-fix.exe
+main-calibration-v2.exe
+gyro-trace-*.csv
+gyro-replay.html
+gyro-replay.png
+replay-browser-temp/
 *.obj
 *.exp
 vc140.pdb

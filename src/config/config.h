@@ -93,6 +93,8 @@ struct Config {
     int key_mode_1 = 0;
     int key_mode_2 = 0;
     int calibration_mode = 3;
+    bool calibration_while_active = true;
+    double calibration_max_gyro_speed = 0.3; // absolute sensor magnitude, degrees/s
     double calibration_correction_time = 2.0;
     double calibration_stillness_time = 0.5;
     double calibration_gyro_delta = 2.5;

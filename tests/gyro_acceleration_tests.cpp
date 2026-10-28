@@ -45,7 +45,7 @@ void Step(GyroState& s, const GyroProfile& p, float yaw, float pitch, float roll
     constexpr double dt = 0.01;
     s.absT += dt;
     s.motion.SetCalibrationMode(GamepadMotionHelpers::CalibrationMode::Manual);
-    s.motion.ProcessMotion(-yaw, -pitch, roll, 0, 0, 1, float(dt));
+    s.motion.ProcessMotion(-pitch, -yaw, roll, 0, 0, 1, float(dt));
     ApplyGyroMovement(0, 0, 0, dt, s, p, 1, slowdown);
 }
 }

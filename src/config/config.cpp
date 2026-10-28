@@ -204,6 +204,10 @@ bool LoadConfig(const std::string& path, Config& current) {
         c.key_mode_1 = j.value("key_mode_1", c.key_mode_1);
         c.key_mode_2 = j.value("key_mode_2", c.key_mode_2);
         c.calibration_mode = j.value("calibration_mode", c.calibration_mode);
+        c.calibration_while_active = j.value("calibration_while_active", c.calibration_while_active);
+        c.calibration_max_gyro_speed = j.value("calibration_max_gyro_speed", c.calibration_max_gyro_speed);
+        if (!std::isfinite(c.calibration_max_gyro_speed) || c.calibration_max_gyro_speed < 0.0)
+            throw std::runtime_error("calibration_max_gyro_speed must be finite and nonnegative");
         c.calibration_correction_time = j.value("calibration_correction_time", c.calibration_correction_time);
         c.calibration_stillness_time = j.value("calibration_stillness_time", c.calibration_stillness_time);
         c.calibration_gyro_delta = j.value("calibration_gyro_delta", c.calibration_gyro_delta);

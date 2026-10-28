@@ -26,7 +26,7 @@ def root_fields() -> list[FieldDef]:
             max_value=256.0,
             step=1.0,
             decimals=1,
-            help_text="Коррекция Z-акселерометра. Помогает, если контроллер лежит неидеально ровно.",
+            help_text="Добавка к Z-акселерометру в g. Для данных SDL рекомендуется 0: наклон контроллера сам по себе не требует поправки, а добавка искажает направление гравитации.",
             advanced=True,
         ),
         field(
@@ -37,6 +37,19 @@ def root_fields() -> list[FieldDef]:
             path=("calibration_mode",),
             options=[("Manual", 0), ("Stillness", 1), ("SensorFusion", 2), ("Stillness + SensorFusion", 3)],
             help_text="Режим автокалибровки гироскопа: Stillness — по неподвижности, SensorFusion — по акселерометру, оба сразу (рекомендуется), Manual — только ручная.",
+        ),
+        field(
+            "General", "Calibration", "Calibrate while gyro is active", "bool",
+            path=("calibration_while_active",),
+            getter=lambda c: get_path(c, ("calibration_while_active",), True),
+            help_text="Разрешить автокалибровку при включённом гироскопе, в том числе в постоянном режиме. Рекомендуется включить. Если выключено, обучение возможно только в режиме 0. Ограничение скорости действует в обоих случаях.",
+        ),
+        field(
+            "General", "Calibration", "Maximum calibration speed", "float",
+            path=("calibration_max_gyro_speed",),
+            getter=lambda c: get_path(c, ("calibration_max_gyro_speed",), 0.3),
+            min_value=0.0, max_value=10.0, step=0.05, decimals=2,
+            help_text="Максимальная абсолютная скорость входного гироскопа для автокалибровки (°/с, длина вектора трёх осей). Начните с 0.3; это консервативная отправная точка, не проверенный на устройстве оптимум. Равномерное движение ниже порога всё ещё можно спутать с дрейфом. 0 разрешает обучение только при точно нулевом сигнале.",
         ),
         field(
             "General",
@@ -60,7 +73,7 @@ def root_fields() -> list[FieldDef]:
             max_value=5.0,
             step=0.25,
             decimals=2,
-            help_text="Окно усреднения встроенного оценщика смещения (сек). Больше окно — спокойнее и точнее оценка. 1.0 — рекомендуемое значение.",
+            help_text="Минимальное окно сбора данных библиотечного оценщика (сек). Рекомендуемая отправная точка — 0.75–1.0. Коррекция дополнительно ждёт Stillness correction time.",
         ),
         field(
             "General",
@@ -68,10 +81,10 @@ def root_fields() -> list[FieldDef]:
             "Stillness gyro delta",
             "float",
             path=("calibration_gyro_delta",),
-            min_value=0.5,
+            min_value=0.01,
             max_value=10.0,
             step=0.1,
-            decimals=1,
+            decimals=2,
             help_text="Максимальное изменение гироскопа за окно (°/с), при котором контроллер считается неподвижным. Меньше — строже (нужен стол), больше — можно откалибровать, держа контроллер в руках.",
         ),
         field(

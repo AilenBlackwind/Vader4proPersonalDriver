@@ -7,6 +7,7 @@
 
 // Shared runtime state touched by the main loop and background threads.
 struct AppRuntime {
+    bool gyro_trace = false; // fixed before starting any runtime threads
     // Guards active_config during watcher writes and main-loop reads.
     std::mutex config_mutex;
     Config active_config;

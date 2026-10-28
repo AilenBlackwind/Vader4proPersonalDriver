@@ -146,7 +146,7 @@
     "angle_snap_degrees": 0.0
   },
   "accel_still_threshold": 1.75,
-  "accel_z_offset": 15.0,
+  "accel_z_offset": 0,
   "calibration_correction_time": 2.0,
   "calibration_stillness_time": 0.7,
   "calibration_gyro_delta": 2.6,

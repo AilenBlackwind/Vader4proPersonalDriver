@@ -35,17 +35,6 @@ struct GyroState {
     bool trigRollPrevActive = false;
     GamepadMotion motion;
 
-    // Bias estimator.
-    bool bias_initialized = false;
-    bool bias_ready = false;
-    float stillT = 0.f;
-    int stillSamples = 0;
-    double stillSumY = 0.0, stillSumP = 0.0, stillSumR = 0.0;
-    float gyroBiasY = 0.f, gyroBiasP = 0.f, gyroBiasR = 0.f;
-    float biasTolerance = 0.5f;     // °/s — max gyro deviation from bias (used post-ready)
-    float biasRawTolerance = 5.f;   // °/s — max raw gyro magnitude before bias_ready
-    float biasCollectionTime = 0.5f; // seconds of stillness before updating (calibration_stillness_time)
-
     // Debug fields updated by ApplyGyroMovement for history dump in app.cpp.
     double debugRawR = 0.0;
     double debugEuroR = 0.0;
@@ -53,6 +42,8 @@ struct GyroState {
     double debugAccelSpeed = 0.0; // filtered, mapped angular speed before acceleration
     double debugAccel = 1.0;
     int debugMx = 0;
+    int debugMy = 0;
+    bool debugAutoCalibrationAllowed = false;
 
     // Deceleration brake state
     struct DecelSample { double ts; float mag; };
@@ -84,10 +75,11 @@ struct GyroState {
 // Manual test helper for fixed-angle turns.
 void PerformRotation(double deg, const GyroProfile& p);
 
-// Running-average bias estimator. Settles the initial bias gradually (whenever
-// stationary, any mode), then refines it during mode 0 (gyro off).
-// Subtracts estimated bias in place.
-void EstimateBias(float& rY, float& rP, float& rR, double dt, GyroState& s, int mode);
+// Shared sensor path, in degrees/s and G. Input uses historical mouse-axis
+// order (SDL Y, X, Z); fusion internally uses native SDL X, Y, Z for both sensors.
+void ProcessGyroSensors(float rY, float rP, float rR,
+                        float aX, float aY, float aZ, double dt,
+                        GyroState& s, int mode, const Config& config);
 
 // Converts calibrated gyro input into mouse motion for the active profile.
 void ApplyGyroMovement(float rY,

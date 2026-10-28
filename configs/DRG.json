@@ -146,7 +146,7 @@
     "angle_snap_degrees": 0.0
   },
   "accel_still_threshold": 1.75,
-  "accel_z_offset": 15.0,
+  "accel_z_offset": 0,
   "calibration_correction_time": 2.0,
   "calibration_stillness_time": 0.7,
   "calibration_gyro_delta": 2.6,
@@ -156,5 +156,6 @@
   "mode2_rumble_interval": 10.0,
   "mode2_rumble_duration": 0.005,
   "mode2_rumble_intensity": 0,
-  "calibration_key": 34
+  "calibration_key": 34,
+  "calibration_max_gyro_speed": 0.2
 }

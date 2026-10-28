@@ -82,20 +82,13 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
     TriggerDebugger dbg;
 
     GyroState state;
+    GyroTrace trace(runtime.gyro_trace);
     Config conf;
     {
         std::lock_guard<std::mutex> l(runtime.config_mutex);
         conf = runtime.active_config;
     }
 
-    {
-        auto calMode = static_cast<GamepadMotionHelpers::CalibrationMode>(conf.calibration_mode);
-        state.motion.SetCalibrationMode(calMode);
-        state.motion.Settings.MinStillnessCorrectionTime = (float)conf.calibration_correction_time;
-        state.motion.Settings.StillnessGyroDelta = (float)conf.calibration_gyro_delta;
-        state.motion.Settings.StillnessAccelDelta = (float)conf.calibration_accel_delta;
-        state.biasCollectionTime = (float)conf.calibration_stillness_time;
-    }
 
     bool disconnected = false;
 
@@ -127,12 +120,6 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
             state.toggle_state = false;
             state.prev_toggle_button = false;
 
-            auto calMode = static_cast<GamepadMotionHelpers::CalibrationMode>(conf.calibration_mode);
-            state.motion.SetCalibrationMode(calMode);
-            state.motion.Settings.MinStillnessCorrectionTime = (float)conf.calibration_correction_time;
-            state.motion.Settings.StillnessGyroDelta = (float)conf.calibration_gyro_delta;
-            state.motion.Settings.StillnessAccelDelta = (float)conf.calibration_accel_delta;
-            state.biasCollectionTime = (float)conf.calibration_stillness_time;
         }
 
         // Read sensor data from SDL3 gamepad API.
@@ -147,7 +134,7 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
         //   gyro[1] (pitch, Y) → rY (was gyro Y data)
         //   gyro[0] (roll, X)  → rP (was gyro X data)
         //   gyro[2] (yaw, Z)   → rR (was gyro Z data)
-        // Gyro: rad/s → °/s, then bias-corrected by EstimateBias.
+        // Gyro: rad/s → °/s; ProcessGyroSensors restores native axes for fusion.
         // Accel: m/s² → G (/ 9.80665).
         float rY = gyro[1] * 57.2958f;
         float rP = gyro[0] * 57.2958f;
@@ -253,8 +240,8 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
         }
 
         // Bias correction, then feed gyro (°/s) and accel (G) to sensor fusion.
-        EstimateBias(rY, rP, rR, dt, state, mode);
-        state.motion.ProcessMotion(rY, rP, rR, aX, aY, aZ, (float)dt);
+        ProcessGyroSensors(rY, rP, rR, aX, aY, aZ, dt,
+                           state, mode, conf);
 
         if (conf.calibration_key != 0) {
             if (GetAsyncKeyState(conf.calibration_key) & 0x8000) {
@@ -271,6 +258,7 @@ void RunConnectedDeviceLoop(SDL_Gamepad* gamepad, SDL_JoystickID gamepad_id,
         }
 
         ApplyGyroMovement(0, 0, 0, dt, state, *p, mode, slowdown);
+        trace.record(dt, mode, conf, rP, rY, rR, aX, aY, aZ, state);
         dbg.updateMouse((float)state.debugEuroR, (float)state.debugHor, (float)state.accX, state.debugMx);
 
         // Mode 2 rumble: short weak left-trigger pulses while high-sensitivity mode is active.

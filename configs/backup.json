@@ -93,5 +93,6 @@
     "roll_euro_min_cutoff": 0.6,
     "roll_euro_beta": 0.045,
     "joy_auto_recenter": 0.15
-  }
+  },
+  "accel_z_offset": 0
 }

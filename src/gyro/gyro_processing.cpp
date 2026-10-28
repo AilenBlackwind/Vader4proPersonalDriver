@@ -103,83 +103,30 @@ void PerformRotation(double deg, const GyroProfile& p) {
     SendInput(1, &in, sizeof(INPUT));
 }
 
-void EstimateBias(float& rY, float& rP, float& rR, double dt, GyroState& s, int mode) {
-    if (!s.bias_initialized) {
-        s.gyroBiasY = rY;
-        s.gyroBiasP = rP;
-        s.gyroBiasR = rR;
-        s.stillT = 0.f;
-        s.stillSamples = 0;
-        s.stillSumY = s.stillSumP = s.stillSumR = 0.0;
-        s.bias_initialized = true;
-    }
-
-    float rawY = rY, rawP = rP, rawR = rR;
-
-    // Two-phase stillness detection: before bias_ready use raw gyro magnitude;
-    // after bias_ready use deviation from established bias.
-    float g_diff;
-    if (!s.bias_ready) {
-        g_diff = sqrtf(rawY * rawY + rawP * rawP + rawR * rawR);
-    } else {
-        float dY = rawY - s.gyroBiasY;
-        float dP = rawP - s.gyroBiasP;
-        float dR = rawR - s.gyroBiasR;
-        g_diff = sqrtf(dY * dY + dP * dP + dR * dR);
-    }
-
-    // Always subtract current bias.
-    rY -= s.gyroBiasY;
-    rP -= s.gyroBiasP;
-    rR -= s.gyroBiasR;
-
-    float tol = s.bias_ready ? s.biasTolerance : s.biasRawTolerance;
-    if (g_diff > tol) {
-        s.stillT = 0.f;
-        s.stillSamples = 0;
-        s.stillSumY = s.stillSumP = s.stillSumR = 0.0;
-        return;
-    }
-
-    s.stillT += (float)dt;
-    s.stillSumY += rawY;
-    s.stillSumP += rawP;
-    s.stillSumR += rawR;
-    s.stillSamples++;
-
-    if (s.stillT >= s.biasCollectionTime && s.stillSamples > 0) {
-        double avgY = s.stillSumY / s.stillSamples;
-        double avgP = s.stillSumP / s.stillSamples;
-        double avgR = s.stillSumR / s.stillSamples;
-
-        if (!s.bias_ready) {
-            // Settle the initial bias gradually instead of freezing a single
-            // window snapshot: micro-motion present at power-on (controller
-            // switched on in hands) can no longer lock in as bias.
-            float blend = (float)(1.0 - exp(-dt * 3.0));
-            s.gyroBiasY += (float)((avgY - s.gyroBiasY) * blend);
-            s.gyroBiasP += (float)((avgP - s.gyroBiasP) * blend);
-            s.gyroBiasR += (float)((avgR - s.gyroBiasR) * blend);
-            // Switch to the tightened phase-2 tolerance only once the bias has
-            // converged to what the controller is actually doing at rest.
-            float eY = (float)avgY - s.gyroBiasY;
-            float eP = (float)avgP - s.gyroBiasP;
-            float eR = (float)avgR - s.gyroBiasR;
-            if (sqrtf(eY * eY + eP * eP + eR * eR) < 0.1f)
-                s.bias_ready = true;
-        } else if (mode == 0) {
-            double blend = 1.0 - exp(-dt * 1.5);
-            s.gyroBiasY += (float)((avgY - s.gyroBiasY) * blend);
-            s.gyroBiasP += (float)((avgP - s.gyroBiasP) * blend);
-            s.gyroBiasR += (float)((avgR - s.gyroBiasR) * blend);
-        }
-
-        s.stillSumY = avgY;
-        s.stillSumP = avgP;
-        s.stillSumR = avgR;
-        s.stillSamples = 1;
-        s.stillT = s.biasCollectionTime;
-    }
+void ProcessGyroSensors(float rY, float rP, float rR,
+                        float aX, float aY, float aZ, double dt,
+                        GyroState& s, int mode, const Config& config) {
+    // One calibration authority: feeding a separately bias-corrected signal
+    // into a second bias estimator lets its learned offset become stale as
+    // the first estimator changes. Manual and automatic calibration now share
+    // the library's offset, in native sensor coordinates.
+    s.motion.Settings.MinStillnessCorrectionTime = (float)config.calibration_correction_time;
+    s.motion.Settings.MinStillnessCollectionTime = (float)config.calibration_stillness_time;
+    s.motion.Settings.StillnessMeanTimeConstant = (float)fmax(0.1,
+        fmax(config.calibration_correction_time, config.calibration_stillness_time));
+    s.motion.Settings.StillnessGyroDelta = (float)config.calibration_gyro_delta;
+    s.motion.Settings.StillnessAccelDelta = (float)config.calibration_accel_delta;
+    // Variation alone cannot distinguish steady yaw from rest. Bound the
+    // ABSOLUTE incoming speed, not deviation from an already learned bias:
+    // otherwise an estimator can follow a slow ramp arbitrarily far.
+    const double speed = sqrt(double(rY) * rY + double(rP) * rP + double(rR) * rR);
+    s.debugAutoCalibrationAllowed = (mode == 0 || config.calibration_while_active) &&
+        std::isfinite(speed) && speed <= config.calibration_max_gyro_speed;
+    s.motion.SetCalibrationMode(s.debugAutoCalibrationAllowed
+        ? static_cast<GamepadMotionHelpers::CalibrationMode>(config.calibration_mode)
+        : GamepadMotionHelpers::CalibrationMode::Manual);
+    // Gyro and acceleration must use the same basis for sensor fusion.
+    s.motion.ProcessMotion(rP, rY, rR, aX, aY, aZ, (float)dt);
 }
 
 void ApplyGyroMovement(float rY,
@@ -192,6 +139,7 @@ void ApplyGyroMovement(float rY,
                        float slowdown) {
     // Core gyro-to-mouse path. Small changes here can strongly affect feel.
     if (mode == 0) {
+        s.debugMx = s.debugMy = 0;
         s.joyFY.filter(0, s.absT);
         s.joyFP.filter(0, s.absT);
         s.accX = 0;
@@ -218,7 +166,7 @@ void ApplyGyroMovement(float rY,
     }
 
     float rawY, rawP, rawR;
-    s.motion.GetCalibratedGyro(rawY, rawP, rawR);
+    s.motion.GetCalibratedGyro(rawP, rawY, rawR);
     // SDL3 gyro Y (pitch) and X (roll) are negated relative to the old HID
     // convention that users' profiles were tuned for.
     rawY = -rawY;
@@ -446,6 +394,7 @@ void ApplyGyroMovement(float rY,
     s.debugEuroR = inputR;
     s.debugHor = hor;
     s.debugMx = mx;
+    s.debugMy = my;
 
     if (mx != 0 || my != 0) {
         INPUT in = {INPUT_MOUSE};

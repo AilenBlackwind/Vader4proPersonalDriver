@@ -90,7 +90,7 @@ namespace GamepadMotionHelpers
 
 		SensorMinMaxWindow();
 		void Reset(float remainder);
-		void AddSample(const Vec& inGyro, const Vec& inAccel, float deltaTime);
+		void AddSample(const Vec& inGyro, const Vec& inAccel, float deltaTime, float meanTimeConstant = 0.f);
 		Vec GetMidGyro();
 	};
 
@@ -195,6 +195,9 @@ public:
 	int MinStillnessSamples = 10;
 	float MinStillnessCollectionTime = 0.5f;
 	float MinStillnessCorrectionTime = 2.f;
+	// Local extension: cap the memory of a continuously accepted stillness
+	// mean. Zero preserves upstream cumulative averaging for other callers.
+	float StillnessMeanTimeConstant = 0.f;
 	float MaxStillnessError = 2.f;
 	float StillnessSampleDeteriorationRate = 0.2f;
 	float StillnessErrorClimbRate = 0.1f;
@@ -667,7 +670,7 @@ namespace GamepadMotionHelpers
 		TimeSampled = remainder;
 	}
 
-	inline void SensorMinMaxWindow::AddSample(const Vec& inGyro, const Vec& inAccel, float deltaTime)
+	inline void SensorMinMaxWindow::AddSample(const Vec& inGyro, const Vec& inAccel, float deltaTime, float meanTimeConstant)
 	{
 		if (NumSamples == 0)
 		{
@@ -691,10 +694,16 @@ namespace GamepadMotionHelpers
 		NumSamples++;
 		TimeSampled += deltaTime;
 
+		// A cumulative mean can retain old drift for arbitrarily long after a
+		// small change that remains within the stillness thresholds. Use a
+		// time-based minimum sample weight when the host requests finite memory.
+		const float meanWeight = meanTimeConstant > 0.f
+			? std::max(1.f / NumSamples, -expm1f(-deltaTime / meanTimeConstant))
+			: 1.f / NumSamples;
 		Vec delta = inGyro - MeanGyro;
-		MeanGyro += delta * (1.f / NumSamples);
+		MeanGyro += delta * meanWeight;
 		delta = inAccel - MeanAccel;
-		MeanAccel += delta * (1.f / NumSamples);
+		MeanAccel += delta * meanWeight;
 	}
 
 	inline Vec SensorMinMaxWindow::GetMidGyro()
@@ -754,7 +763,7 @@ namespace GamepadMotionHelpers
 		const float stillnessGyroDelta = Settings->StillnessGyroDelta;
 		const float stillnessAccelDelta = Settings->StillnessAccelDelta;
 
-		MinMaxWindow.AddSample(inGyro, inAccel, deltaTime);
+		MinMaxWindow.AddSample(inGyro, inAccel, deltaTime, Settings->StillnessMeanTimeConstant);
 		// get deltas
 		const Vec gyroDelta = MinMaxWindow.MaxGyro - MinMaxWindow.MinGyro;
 		const Vec accelDelta = MinMaxWindow.MaxAccel - MinMaxWindow.MinAccel;

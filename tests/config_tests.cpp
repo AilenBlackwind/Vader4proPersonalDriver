@@ -116,6 +116,15 @@ void TestWatcherRecovery() {
 int main() {
     try {
         TestIndices();
+        Write("test.json", R"({"calibration_while_active":false,"calibration_max_gyro_speed":0.2})");
+        Config calibration;
+        Check(LoadConfig("test.json", calibration) && !calibration.calibration_while_active &&
+              calibration.calibration_max_gyro_speed == 0.2, "Calibration policy was not loaded");
+        for (const char* bad : {"-1", "1e999", "null", "\"fast\""}) {
+            Write("test.json", std::string("{\"calibration_max_gyro_speed\":") + bad + "}");
+            Check(!LoadConfig("test.json", calibration) && calibration.calibration_max_gyro_speed == 0.2,
+                  "Invalid calibration limit changed current configuration");
+        }
         Write("test.json", R"({"low_profile":{"recovery_rate":0.1},"high_profile":{"recovery_rate":4.0}})");
         Config recoveryConfig;
         Check(LoadConfig("test.json", recoveryConfig) &&
